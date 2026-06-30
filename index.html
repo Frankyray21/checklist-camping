@@ -296,7 +296,7 @@
     <main id="liste"></main>
 
     <div class="pied" id="pied"></div>
-    <p class="note">Sauvegardé sur cet appareil. Tes coches restent là quand tu reviens.</p>
+    <p class="note">Sauvegardé sur cet appareil. Tes coches restent là quand tu reviens. <span id="ver"></span></p>
   </div>
 
   <div id="printDoc"></div>
@@ -550,6 +550,7 @@
     ]}
   ];
 
+  var VERSION = 'v1.0.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{} };
 
@@ -940,6 +941,8 @@
   }
 
   (async function init(){
+    var v = document.getElementById('ver');
+    if(v) v.textContent = VERSION;
     await load();
     render();
   })();
