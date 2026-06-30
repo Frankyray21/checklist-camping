@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Camping en tente</title>
+<meta name="description" content="Liste de camping en tente, l'été avec les flos. Coche, le feu va pogner.">
+<meta name="theme-color" content="#13241B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Camping">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -134,6 +143,24 @@
   .compte b{color:var(--braise);}
   .compte small{font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:14px; color:var(--cendre); letter-spacing:0;}
 
+  /* Petit Bob, le commentateur officiel du camping */
+  .bob{
+    display:flex; align-items:flex-start; gap:9px; margin:14px auto 2px; max-width:430px;
+    text-align:left; cursor:pointer; font-family:inherit; color:var(--toile);
+    background:rgba(239,230,211,.06); border:1px solid rgba(239,230,211,.1);
+    border-radius:14px; padding:11px 14px; transition:background .15s ease, transform .08s ease;
+  }
+  .bob:hover{background:rgba(239,230,211,.1);}
+  .bob:active{transform:scale(.99);}
+  .bob:focus-visible{outline:3px solid var(--ciel); outline-offset:2px;}
+  .bobpip{flex:0 0 auto; width:16px; height:16px; margin-top:2px; border-radius:50% 50% 50% 0;
+    transform:rotate(45deg);
+    background:radial-gradient(circle at 60% 60%, var(--or), var(--braise) 70%);
+    box-shadow:0 0 8px rgba(244,169,61,.55);}
+  .bobtxt{flex:1; font-size:13.5px; line-height:1.4; color:var(--cendre);}
+  .bobtxt b{color:var(--flamme); font-weight:800; letter-spacing:.2px;}
+  #bobmot{transition:opacity .2s ease;}
+
   /* Catégories */
   .cat{
     background:linear-gradient(180deg, var(--toile) 0%, var(--toile-2) 100%);
@@ -219,6 +246,17 @@
     display:flex; align-items:center; gap:8px;
   }
   .reset:hover{border-color:var(--braise); color:var(--flamme);}
+  .install{
+    border:1.5px solid var(--ciel); background:rgba(123,160,174,.12); color:var(--toile);
+    border-radius:99px; padding:12px 24px; cursor:pointer; font-family:inherit; font-weight:800; font-size:14.5px;
+    display:flex; align-items:center; gap:9px; letter-spacing:.2px;
+  }
+  .install:hover{background:rgba(123,160,174,.22); border-color:var(--or);}
+  .install:active{transform:scale(.97);}
+  .install svg{width:18px; height:18px;}
+  .installtip{max-width:430px; text-align:center; color:var(--cendre); font-size:13px; line-height:1.4;
+    background:rgba(239,230,211,.06); border:1px solid rgba(239,230,211,.1); border-radius:12px; padding:10px 14px;}
+  .installtip b{color:var(--flamme);}
   .confirm{display:flex; gap:8px; align-items:center; color:var(--cendre); font-size:14px; font-weight:600;}
   .confirm button{border-radius:99px; padding:9px 18px; border:0; cursor:pointer; font-family:inherit; font-weight:700; font-size:14px;}
   .confirm .oui{background:var(--braise); color:#fff;}
@@ -291,6 +329,11 @@
 
       <p class="etat" id="etat">Le feu est pas encore pogné</p>
       <p class="compte"><b id="nFait">0</b> <small>/ <span id="nTotal">0</span> items rangés</small></p>
+
+      <button class="bob" id="bob" type="button" title="Tape pour une autre niaiserie de Petit Bob">
+        <span class="bobpip" aria-hidden="true"></span>
+        <span class="bobtxt"><b>Petit Bob :</b> <span id="bobmot">prépare son sac depuis trois jours. Il a mis une roche pis rien d'autre.</span></span>
+      </button>
     </header>
 
     <main id="liste"></main>
@@ -550,9 +593,9 @@
     ]}
   ];
 
-  var VERSION = 'v1.0.0';
+  var VERSION = 'v1.1.0';
   var KEY = 'camping:tente:v2';
-  var state = { checked:{}, custom:{}, open:{} };
+  var state = { checked:{}, custom:{}, open:{}, removed:{} };
 
   // Persistance: localStorage si dispo, sinon repli en mémoire (navigation privée, etc.)
   var memStore = {};
@@ -575,6 +618,7 @@
         var saved = JSON.parse(raw);
         if(saved.checked) state.checked = saved.checked;
         if(saved.custom) state.custom = saved.custom;
+        if(saved.removed) state.removed = saved.removed;
         if(saved.open) state.open = Object.assign(state.open, saved.open);
       }
     }catch(e){ /* première ouverture ou stockage indispo: on garde le défaut */ }
@@ -592,9 +636,15 @@
     }, 120);
   }
 
+  function visibleDefaults(cat){
+    return cat.items.filter(function(it){ return !state.removed[it.id]; });
+  }
   function allItems(cat){
     var extra = (state.custom[cat.id] || []);
-    return cat.items.concat(extra);
+    return visibleDefaults(cat).concat(extra);
+  }
+  function removedCount(){
+    return Object.keys(state.removed).filter(function(k){ return state.removed[k]; }).length;
   }
   function totals(){
     var done=0, tot=0;
@@ -611,6 +661,44 @@
 
   var CHECK = '<svg viewBox="0 0 24 24"><path d="M4 12.5 10 18 20 6"/></svg>';
   var CHECKP = '<svg viewBox="0 0 24 24" fill="none" stroke="#1E3A2C" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 10 18 20 6"/></svg>';
+
+  // Petit Bob, commentateur sportif du camping. Niaiseries officielles.
+  var BOB = [
+    'prépare son sac depuis trois jours. Il a mis une roche pis rien d’autre.',
+    'a nommé chaque maringouin du terrain. Y’en a 4 000. Il a commencé par Gérald.',
+    'jure que les ratons laveurs ont signé un bail de trois ans sur la glacière.',
+    'pense qu’un sac de couchage, c’est juste un costume de ver de terre pour adultes.',
+    'a essayé de faire griller une guimauve avec sa lampe frontale. Ça marche toujours pas.',
+    'a demandé le code wifi à un orignal. L’orignal a dit non, mais poliment.',
+    's’est perdu dans la tente. La tente fait deux mètres de large.',
+    'a emballé 14 canifs pis zéro bobette. Question de priorités, qu’il dit.',
+    'salue le soleil à 5h du matin. Le soleil, lui, dormait encore.',
+    'a confondu le sirop d’érable pis le chasse-moustiques. Les deux marchent pas pareil.',
+    'garde une vieille roche « au cas où ». Au cas où quoi, personne ose demander.',
+    'considère que le feu de camp, c’est de la télé pour le monde du bois.',
+    'a essayé de domestiquer un écureuil. L’écureuil est maintenant son gérant.',
+    'dit qu’une journée sans guimauve, c’est juste un meeting en plein air.',
+    'a monté la tente à l’envers. Il appelle ça « concept ».',
+    'parle aux poissons depuis 9h. Les poissons l’ignorent depuis 9h01.',
+    'a apporté un parapluie pour le feu « au cas où il pleuve des étincelles ».',
+    'compte les étoiles. Il est rendu à deux. Il recommence à chaque fois.',
+    'a câlé le silence dans le bois. Le bois a pas répondu. Il a pris ça personnel.',
+    'range ses bas par ordre de personnalité. Le gauche est plus drôle.'
+  ];
+  var bobLast = -1;
+  function bobMot(){
+    if(BOB.length < 2) return BOB[0] || '';
+    var i = bobLast;
+    while(i === bobLast){ i = Math.floor(Math.random() * BOB.length); }
+    bobLast = i;
+    return BOB[i];
+  }
+  function showBob(){
+    var m = document.getElementById('bobmot');
+    if(!m) return;
+    m.style.opacity = '0';
+    setTimeout(function(){ m.textContent = bobMot(); m.style.opacity = '1'; }, 180);
+  }
 
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
@@ -629,25 +717,30 @@
     inp.addEventListener('change', function(){
       state.checked[it.id] = inp.checked;
       if(!inp.checked) delete state.checked[it.id];
-      save(); refresh();
+      save(); refresh(); showBob();
     });
     var box = el('span','box', CHECK);
     var txt = el('span','txt');
     txt.appendChild(el('span','nm', it.nm));
     if(it.nt) txt.appendChild(el('span','nt', it.nt));
     row.appendChild(inp); row.appendChild(box); row.appendChild(txt);
-    if(isCustom){
-      var del = el('button','del','\u00D7');
-      del.type='button';
-      del.setAttribute('aria-label','Enlever '+it.nm);
-      del.addEventListener('click', function(ev){
-        ev.preventDefault(); ev.stopPropagation();
+
+    var del = el('button','del','\u00D7');
+    del.type='button';
+    del.setAttribute('aria-label','Enlever '+it.nm);
+    del.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      if(isCustom){
+        // item personnalis\u00E9: on l'efface pour de bon
         state.custom[cat.id] = (state.custom[cat.id]||[]).filter(function(x){ return x.id !== it.id; });
-        delete state.checked[it.id];
-        save(); render();
-      });
-      row.appendChild(del);
-    }
+      } else {
+        // item de base: on le retire (r\u00E9cup\u00E9rable avec \u00AB R\u00E9tablir \u00BB)
+        state.removed[it.id] = true;
+      }
+      delete state.checked[it.id];
+      save(); render();
+    });
+    row.appendChild(del);
     return row;
   }
 
@@ -675,7 +768,7 @@
       });
 
       var body = el('div','catbody');
-      cat.items.forEach(function(it){ body.appendChild(buildItem(cat, it, false)); });
+      visibleDefaults(cat).forEach(function(it){ body.appendChild(buildItem(cat, it, false)); });
       (state.custom[cat.id]||[]).forEach(function(it){ body.appendChild(buildItem(cat, it, true)); });
 
       var ajout = el('div','ajout');
@@ -885,6 +978,47 @@
     setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
   }
 
+  // PWA: on garde l'invite d'installation native sous la main
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); deferredPrompt = e; buildFooter();
+  });
+  window.addEventListener('appinstalled', function(){
+    deferredPrompt = null; buildFooter();
+  });
+  function isStandalone(){
+    try{
+      return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    }catch(e){ return false; }
+  }
+  var DL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>';
+
+  function makeInstallControl(){
+    if(isStandalone()) return null; // déjà installée
+    if(deferredPrompt){
+      var b = el('button','install', DL_SVG + ' Télécharger l’app');
+      b.type='button';
+      b.addEventListener('click', function(){
+        var dp = deferredPrompt; deferredPrompt = null; b.disabled = true;
+        try{ dp.prompt(); if(dp.userChoice) dp.userChoice.then(function(){ buildFooter(); }); }
+        catch(e){ buildFooter(); }
+      });
+      return b;
+    }
+    // pas d'invite native (iOS Safari, etc.): on montre les instructions
+    var info = el('button','install', DL_SVG + ' Télécharger l’app');
+    info.type='button';
+    info.addEventListener('click', function(){
+      var ex = document.getElementById('installtip');
+      if(ex){ ex.parentNode.removeChild(ex); return; }
+      var tip = el('div','installtip');
+      tip.id = 'installtip';
+      tip.innerHTML = 'Pour l’ajouter à ton téléphone : sur <b>iPhone</b>, touche <b>Partager</b> puis <b>Sur l’écran d’accueil</b>. Sur <b>Android (Chrome)</b>, ouvre le menu <b>⋮</b> puis <b>Installer l’application</b>.';
+      info.insertAdjacentElement('afterend', tip);
+    });
+    return info;
+  }
+
   function buildFooter(){
     var pied = document.getElementById('pied');
     pied.innerHTML='';
@@ -905,6 +1039,19 @@
       pied.innerHTML=''; pied.appendChild(c);
     });
     pied.appendChild(pdf);
+
+    var inst = makeInstallControl();
+    if(inst) pied.appendChild(inst);
+
+    var nRem = removedCount();
+    if(nRem > 0){
+      var reb = el('button','reset',
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg> Rétablir '+nRem+' item'+(nRem>1?'s':'')+' retiré'+(nRem>1?'s':''));
+      reb.type='button';
+      reb.addEventListener('click', function(){ state.removed={}; save(); render(); });
+      pied.appendChild(reb);
+    }
+
     pied.appendChild(btn);
   }
 
@@ -915,7 +1062,7 @@
     if(p<0.34) return 'Ça commence à brûler';
     if(p<0.67) return 'Le feu prend ben comme faut';
     if(p<1) return 'Belle attisée, presque là';
-    return 'Tout est rangé. Bon camping\u00A0!';
+    return 'Tout est rangé. Même Petit Bob est impressionné\u00A0!';
   }
 
   function refresh(){
@@ -945,6 +1092,23 @@
     if(v) v.textContent = VERSION;
     await load();
     render();
+
+    // Petit Bob: première niaiserie + bouton pour en pogner une autre
+    var bm = document.getElementById('bobmot');
+    if(bm) bm.textContent = bobMot();
+    var bobBtn = document.getElementById('bob');
+    if(bobBtn) bobBtn.addEventListener('click', showBob);
+    // rotation douce, seulement si le mouvement est toléré
+    try{
+      if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: no-preference)').matches){
+        setInterval(showBob, 16000);
+      }
+    }catch(e){}
+
+    // PWA: enregistrement du service worker pour le mode hors-ligne
+    if('serviceWorker' in navigator){
+      try{ navigator.serviceWorker.register('sw.js'); }catch(e){}
+    }
   })();
 })();
 </script>

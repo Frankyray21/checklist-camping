@@ -1,0 +1,27 @@
+{
+  "name": "Camping en tente",
+  "short_name": "Camping",
+  "description": "La liste de camping en tente, l'été avec les flos. Coche, le feu va pogner.",
+  "lang": "fr-CA",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#13241B",
+  "theme_color": "#13241B",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
