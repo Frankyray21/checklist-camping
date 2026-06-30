@@ -1,0 +1,22 @@
+# Dépendances
+node_modules/
+
+# Vercel
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+
+# Fichiers temporaires
+*.tmp
+liste-camping.pdf
