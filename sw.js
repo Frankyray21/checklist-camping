@@ -1,5 +1,5 @@
 /* Service worker — Camping en tente (PWA hors-ligne) */
-var CACHE = 'camping-tente-v2.5.0';
+var CACHE = 'camping-tente-v2.5.1';
 var CORE = [
   './',
   './index.html',
@@ -27,7 +27,7 @@ self.addEventListener('fetch', function(e){
   if(req.method !== 'GET') return;
 
   // Synchro du camp partagé: toujours au réseau, jamais en cache
-  if(req.url.indexOf('extendsclass.com') !== -1 || req.url.indexOf('jsonblob.com') !== -1) return;
+  if(req.url.indexOf('firebaseio.com') !== -1 || req.url.indexOf('extendsclass.com') !== -1 || req.url.indexOf('jsonblob.com') !== -1) return;
 
   // Navigation: réseau d'abord, repli sur la page en cache (mode hors-ligne)
   if(req.mode === 'navigate'){

@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.5.1 — 2026-07-01
+
+### Modifié
+- **Camp partagé** : les deux services gratuits essayés précédemment (jsonblob bloqué par CORS, extendsclass fermé/404) sont remplacés par **Firebase Realtime Database** (base gratuite dédiée au projet). Plus fiable et pérenne pour la synchro en direct entre 2 appareils.
+
 ## v2.5.0 — 2026-07-01
 
 ### Amélioré (passe d'animation)

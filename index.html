@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.5.0';
+  var VERSION = 'v2.5.1';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1535,9 +1535,9 @@
     showBadge('🏕️ Liste partagée chargée !');
   }
 
-  // --- Camp partagé: synchro live entre 2 appareils (jsonblob, sans compte) ---
-  var CAMP_CREATE = 'https://api.extendsclass.com/json-storage/bin';
-  function CAMP_BIN(id){ return 'https://api.extendsclass.com/json-storage/bin/' + id; }
+  // --- Camp partagé: synchro live entre 2 appareils (Firebase Realtime Database, sans compte) ---
+  var FIREBASE_URL = 'https://camping-tente-default-rtdb.firebaseio.com';
+  function CAMP_BIN(id){ return FIREBASE_URL + '/camps/' + id + '.json'; }
   var CAMPKEY = 'camping:camp';
   var campId = null, campTs = 0, syncTimer = null, pushT = null, applyingRemote = false;
 
@@ -1611,7 +1611,8 @@
   function createCamp(){
     showBadge('📡 Création du camp partagé…');
     var payload = campPayload();
-    fetch(CAMP_CREATE, { method:'POST',
+    // Firebase génère un identifiant unique quand on POST sur la liste des camps
+    fetch(FIREBASE_URL + '/camps.json', { method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body:JSON.stringify(payload) })
       .then(function(res){
@@ -1620,7 +1621,7 @@
       })
       .then(function(data){
         if(!data) return;
-        var id = data.id || data._id || data.key || data.bin_id || '';
+        var id = data.name || '';
         if(!id){ showBadge('⚠️ Réponse inattendue du service. On reste local.'); return; }
         setCampId(id); campTs = payload.ts;
         startSync(); buildFooter(); shareCampLink();
