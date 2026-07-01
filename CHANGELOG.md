@@ -3,6 +3,15 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.8.0 — 2026-07-01
+
+### Ajouté
+- **Ciel de soir qui se dévoile en finissant la liste** :
+  - ⭐ **Étoiles scintillantes** qui s'allument progressivement dans le ciel dès ~35 %.
+  - 🌙 **Une lune** qui se lève doucement dans le coin après ~60 %.
+  - 🌠 **Étoiles filantes** qui traversent de temps en temps une fois la nuit bien tombée (au-delà de ~60 %).
+- Le tout en arrière-plan, sous les textes (lisibilité intacte), et désactivé si l'utilisateur réduit les animations.
+
 ## v1.7.0 — 2026-07-01
 
 ### Ajouté

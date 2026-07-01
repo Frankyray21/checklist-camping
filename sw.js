@@ -1,5 +1,5 @@
 /* Service worker — Camping en tente (PWA hors-ligne) */
-var CACHE = 'camping-tente-v1.7.0';
+var CACHE = 'camping-tente-v1.8.0';
 var CORE = [
   './',
   './index.html',

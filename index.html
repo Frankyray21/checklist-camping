@@ -63,6 +63,32 @@
   }
   @media (prefers-reduced-motion: reduce){ .sky{ transition:none; } }
 
+  /* Étoiles qui s'allument quand la nuit tombe */
+  .stars{position:fixed; left:0; right:0; top:0; height:62%; z-index:-1; pointer-events:none;
+    opacity:0; transition:opacity 1.2s ease;}
+  .star{position:absolute; border-radius:50%; background:#fff9ec; box-shadow:0 0 4px rgba(255,246,220,.75);}
+  @media (prefers-reduced-motion: no-preference){ .star{animation:twinkle 3s ease-in-out infinite;} }
+  @keyframes twinkle{0%,100%{opacity:var(--o,.85);} 50%{opacity:calc(var(--o,.85) * .25);}}
+
+  /* Lune qui se lève vers la fin */
+  .moon{position:fixed; top:62px; right:30px; width:34px; height:34px; border-radius:50%;
+    z-index:-1; pointer-events:none; opacity:0; transition:opacity 1.2s ease, transform 1.2s ease;
+    transform:translateY(8px); background:transparent;
+    box-shadow: inset -9px -5px 0 0 #f4edcf, 0 0 16px rgba(251,212,106,.28);}
+  .moon.up{transform:translateY(0);}
+
+  /* Étoiles filantes (nuit profonde) */
+  .shoot{position:fixed; z-index:-1; pointer-events:none; width:2px; height:2px; border-radius:50%;
+    background:#fff; box-shadow:0 0 6px 1px rgba(255,255,255,.9);}
+  .shoot::after{content:""; position:absolute; right:2px; top:50%; width:90px; height:1.6px;
+    transform:translateY(-50%); border-radius:2px;
+    background:linear-gradient(to left, rgba(255,255,255,.85), transparent);}
+  @keyframes shoot{
+    0%{opacity:0; transform:translate(0,0) rotate(20deg);}
+    10%{opacity:1;}
+    100%{opacity:0; transform:translate(230px,84px) rotate(20deg);}
+  }
+
   /* Barre fine collante en haut */
   .rail{
     position:sticky; top:0; z-index:50;
@@ -493,6 +519,8 @@
 <body>
 
   <div class="sky" id="sky" aria-hidden="true"></div>
+  <div class="stars" id="stars" aria-hidden="true"></div>
+  <div class="moon" id="moon" aria-hidden="true"></div>
 
   <div class="rail">
     <span class="minifeu" id="minifeu" aria-hidden="true"><i class="minipip"></i><i class="mflame mf1"></i><i class="mflame mf2"></i></span>
@@ -793,7 +821,7 @@
     ]}
   ];
 
-  var VERSION = 'v1.7.0';
+  var VERSION = 'v1.8.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0 };
 
@@ -910,6 +938,42 @@
     if(n <= 0){ v.classList.add('hide'); v.textContent = ''; return; }
     v.classList.remove('hide');
     v.innerHTML = '🦝 Le raton t’a piqué <b>' + n + '</b> guimauve' + (n > 1 ? 's' : '') + ' jusqu’à date.';
+  }
+
+  // Ciel de soir: étoiles, lune, filantes
+  function makeStars(){
+    var box = document.getElementById('stars');
+    if(!box || box.childNodes.length) return;
+    var html = '';
+    for(var i=0;i<48;i++){
+      var size = (Math.random()*1.8 + 1).toFixed(1);
+      var o = (0.45 + Math.random()*0.55).toFixed(2);
+      html += '<span class="star" style="width:'+size+'px;height:'+size+'px;left:'
+        + (Math.random()*100).toFixed(2) + '%;top:' + (Math.random()*100).toFixed(2)
+        + '%;--o:' + o + ';opacity:' + o + ';animation-duration:' + (2.2 + Math.random()*3).toFixed(2)
+        + 's;animation-delay:' + (Math.random()*3).toFixed(2) + 's"></span>';
+    }
+    box.innerHTML = html;
+  }
+
+  function shootingStar(){
+    if(!motionOK) return;
+    var s = document.createElement('span');
+    s.className = 'shoot';
+    s.style.left = (8 + Math.random()*52) + '%';
+    s.style.top = (5 + Math.random()*22) + '%';
+    s.style.animation = 'shoot ' + (0.9 + Math.random()*0.5).toFixed(2) + 's ease-in forwards';
+    document.body.appendChild(s);
+    s.addEventListener('animationend', function(){ if(s.parentNode) s.parentNode.removeChild(s); });
+  }
+
+  var nightTimer = null;
+  function startNightWatch(){
+    if(!motionOK || nightTimer) return;
+    // une filante de temps en temps quand la nuit est bien tombée
+    nightTimer = setInterval(function(){
+      if(curFire >= 0.6 && Math.random() < 0.33) shootingStar();
+    }, 8000);
   }
 
   // Répliques spéciales quand le raton frappe
@@ -1574,6 +1638,11 @@
     if(mini) mini.style.setProperty('--mf', p.toFixed(3));
     var sky = document.getElementById('sky');
     if(sky) sky.style.opacity = (p * 0.72).toFixed(3);   // le ciel se réchauffe (plafonné pour rester lisible)
+    var stars = document.getElementById('stars');
+    if(stars) stars.style.opacity = Math.max(0, Math.min(1, (p - 0.35) / 0.6)).toFixed(3);  // les étoiles s'allument dès ~35%
+    var moon = document.getElementById('moon');
+    if(moon){ moon.style.opacity = Math.max(0, Math.min(1, (p - 0.6) / 0.4)).toFixed(3);     // la lune se lève après ~60%
+      moon.classList.toggle('up', p >= 0.6); }
     document.getElementById('nFait').textContent = t.done;
     document.getElementById('nTotal').textContent = t.tot;
     document.getElementById('etat').textContent = etatTexte(p);
@@ -1615,6 +1684,10 @@
         setInterval(showBob, 30000);
       }
     }catch(e){}
+
+    // Ciel de soir: on sème les étoiles et on guette les filantes
+    makeStars();
+    startNightWatch();
 
     // Le raton laveur guette la guimauve, la moufette guette tout le monde
     startRaccoonWatch();
