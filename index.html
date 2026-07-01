@@ -925,7 +925,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.3.0';
+  var VERSION = 'v2.3.1';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{} };
 
@@ -1452,7 +1452,8 @@
   }
 
   // --- Camp partagé: synchro live entre 2 appareils (jsonblob, sans compte) ---
-  var CAMP_API = 'https://jsonblob.com/api/jsonBlob';
+  var CAMP_CREATE = 'https://api.extendsclass.com/json-storage/bin';
+  function CAMP_BIN(id){ return 'https://api.extendsclass.com/json-storage/bin/' + id; }
   var CAMPKEY = 'camping:camp';
   var campId = null, campTs = 0, syncTimer = null, pushT = null, applyingRemote = false;
 
@@ -1481,14 +1482,14 @@
   function pushCamp(){
     if(!campId) return;
     var payload = campPayload();
-    fetch(CAMP_API + '/' + campId, { method:'PUT',
-      headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+    fetch(CAMP_BIN(campId), { method:'PUT',
+      headers:{ 'Content-Type':'application/json' },
       body:JSON.stringify(payload) })
       .then(function(){ campTs = payload.ts; }).catch(function(){});
   }
   function pullCamp(){
     if(!campId || document.hidden) return;
-    fetch(CAMP_API + '/' + campId, { headers:{ 'Accept':'application/json' }, cache:'no-store' })
+    fetch(CAMP_BIN(campId), { cache:'no-store' })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(data){
         if(data && data.ts && data.ts > campTs){ campTs = data.ts; applyRemoteList(data.list); }
@@ -1521,17 +1522,22 @@
   function createCamp(){
     showBadge('📡 Création du camp partagé…');
     var payload = campPayload();
-    fetch(CAMP_API, { method:'POST',
-      headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+    fetch(CAMP_CREATE, { method:'POST',
+      headers:{ 'Content-Type':'application/json' },
       body:JSON.stringify(payload) })
       .then(function(res){
-        var loc = res.headers.get('Location') || res.headers.get('location') || '';
-        var id = loc ? loc.split('/').pop() : '';
-        if(!id){ showBadge('⚠️ Camp partagé impossible (réseau/CORS). On reste local.'); return; }
+        if(!res.ok){ showBadge('⚠️ Service a refusé le camp (code ' + res.status + ').'); return null; }
+        return res.json();
+      })
+      .then(function(data){
+        if(!data) return;
+        var id = data.id || data._id || data.key || data.bin_id || '';
+        if(!id){ showBadge('⚠️ Réponse inattendue du service. On reste local.'); return; }
         setCampId(id); campTs = payload.ts;
         startSync(); buildFooter(); shareCampLink();
+        showBadge('📡 Camp créé ! Envoie le lien à ta conjointe.');
       })
-      .catch(function(){ showBadge('⚠️ Erreur réseau pour le camp partagé.'); });
+      .catch(function(){ showBadge('⚠️ Réseau/CORS bloqué à la création du camp.'); });
   }
   function joinCampFromHash(){
     var m = (location.hash || '').match(/[#&]camp=([^&]+)/);
