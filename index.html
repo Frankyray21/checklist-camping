@@ -309,6 +309,56 @@
   .vols b{color:var(--flamme); font-weight:800; font-variant-numeric:tabular-nums;}
   .vols.hide{display:none;}
 
+  /* Rang de campeur évolutif */
+  .rang{margin:12px 0 0; font-size:11.5px; letter-spacing:2px; text-transform:uppercase; font-weight:800; color:var(--ciel);}
+  .rang b{color:var(--or); font-weight:800;}
+
+  /* Baromètre de bines */
+  .bines{display:flex; align-items:center; gap:9px; justify-content:center; margin:11px auto 0; max-width:380px;
+    font-size:12.5px; color:var(--cendre); font-weight:700;}
+  .bines.hide{display:none;}
+  .binesbar{flex:1; height:6px; max-width:140px; border-radius:99px; background:rgba(239,230,211,.12); overflow:hidden;}
+  .binesbar i{display:block; height:100%; width:0; border-radius:99px;
+    background:linear-gradient(90deg,#8bbf4a,#e8b13c 55%,#c4421f); transition:width .5s ease;}
+  .binesniv{white-space:nowrap; color:var(--flamme); font-weight:800;}
+
+  /* Saucisse fugueuse */
+  .saucisse{position:absolute; left:50%; bottom:34px; width:34px; height:15px; border-radius:9px; z-index:6; pointer-events:none;
+    background:linear-gradient(180deg,#b0632f,#6f3a1a);
+    box-shadow:inset 0 -3px 3px rgba(0,0,0,.35), 0 2px 4px rgba(0,0,0,.4);
+    animation:saucisse 2.7s ease-in forwards;}
+  .saucisse::before{content:""; position:absolute; inset:3px 5px; border-radius:8px;
+    background:repeating-linear-gradient(90deg, transparent 0 5px, rgba(0,0,0,.2) 5px 7px);}
+  .ayoye{position:absolute; z-index:7; pointer-events:none; font-family:'Anton',sans-serif; font-size:16px; color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,.65); animation:ayoye 1.5s ease-out forwards;}
+  @keyframes saucisse{
+    0%{transform:translateX(-50%) rotate(0deg); opacity:0;}
+    8%{opacity:1;}
+    100%{transform:translateX(-330px) translateY(28px) rotate(-760deg); opacity:0;}
+  }
+  @keyframes ayoye{0%{opacity:0; transform:translateY(0) scale(.7);} 20%{opacity:1;} 100%{opacity:0; transform:translateY(-28px) scale(1.1);}}
+
+  /* Poutine d'urgence */
+  .poutine{position:fixed; left:50%; top:-150px; width:124px; height:120px; z-index:48; pointer-events:none;
+    transform:translateX(-50%); animation:poutinedrop 2.8s cubic-bezier(.5,1.35,.5,1) forwards;}
+  .poutine svg{width:100%; height:100%; display:block; filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));}
+  @keyframes poutinedrop{
+    0%{top:-150px; transform:translateX(-50%) rotate(-8deg);}
+    32%{top:36%; transform:translateX(-50%) rotate(5deg);}
+    42%{top:31%;}
+    52%{top:36%; transform:translateX(-50%) rotate(-2deg);}
+    82%{top:36%; opacity:1; transform:translateX(-50%) rotate(0deg);}
+    100%{top:33%; opacity:0; transform:translateX(-50%) scale(1.06);}
+  }
+
+  /* Badge niaiseux (toast) */
+  .badge{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); z-index:60; pointer-events:none;
+    background:linear-gradient(135deg,var(--flamme),var(--braise)); color:#fff; font-weight:800; font-size:13.5px;
+    padding:11px 18px; border-radius:99px; box-shadow:0 10px 24px rgba(232,118,60,.42); opacity:0; max-width:88%;
+    display:flex; align-items:center; gap:8px; text-align:center; line-height:1.3;}
+  .badge.show{animation:badge 4.4s ease forwards;}
+  @keyframes badge{0%{opacity:0; transform:translateX(-50%) translateY(20px);} 9%,82%{opacity:1; transform:translateX(-50%) translateY(0);} 100%{opacity:0; transform:translateX(-50%) translateY(20px);}}
+
   /* Bibittes qui trottinent + poussière + bouffées de puanteur */
   .gui.show{opacity:1 !important;}
   .dust{position:absolute; bottom:15px; width:11px; height:11px; border-radius:50%; z-index:5;
@@ -580,6 +630,12 @@
 
       <p class="etat" id="etat">Le feu est pas encore pogné</p>
       <p class="compte"><b id="nFait">0</b> <small>/ <span id="nTotal">0</span> items rangés</small></p>
+      <p class="rang" id="rang"></p>
+      <div class="bines hide" id="bines">
+        <span>💨 Baromètre de bines</span>
+        <span class="binesbar"><i id="binesFill"></i></span>
+        <span class="binesniv" id="binesNiv"></span>
+      </div>
 
       <div class="zoo">
         <button class="zoobtn" id="callRaton" type="button">🦝 Appeler le raton</button>
@@ -850,7 +906,7 @@
     ]}
   ];
 
-  var VERSION = 'v1.9.0';
+  var VERSION = 'v2.0.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0 };
 
@@ -1024,6 +1080,132 @@
     bobSay(WISH_BOB[i]);
   }
 
+  // --- Rang de campeur évolutif ---
+  var RANGS = [
+    { p:0.00, nom:'Ver de terre citadin' },
+    { p:0.12, nom:'Touriste en sandales' },
+    { p:0.28, nom:'Apprenti feu de camp' },
+    { p:0.45, nom:'Campeur du dimanche' },
+    { p:0.62, nom:'Vétéran des maringouins' },
+    { p:0.82, nom:'Maître de la guimauve' },
+    { p:1.00, nom:'Seigneur des Tentes' }
+  ];
+  function updateRang(p){
+    var el = document.getElementById('rang');
+    if(!el) return;
+    var nom = RANGS[0].nom;
+    for(var i=0;i<RANGS.length;i++){ if(p >= RANGS[i].p) nom = RANGS[i].nom; }
+    el.innerHTML = 'Rang : <b>' + nom + '</b>';
+  }
+
+  // --- Baromètre de bines (selon les items de bouffe cochés) ---
+  var BINES = [
+    { p:0.001, niv:'Brise légère' },
+    { p:0.25, niv:'P’tit vent d’ouest' },
+    { p:0.50, niv:'Ça sent le camping' },
+    { p:0.75, niv:'Alerte tente' },
+    { p:0.999, niv:'Évacuation générale' }
+  ];
+  function binesRatio(){
+    var done=0, tot=0;
+    DATA.forEach(function(cat){
+      if(cat.id==='cuis' || cat.id==='bouffe'){
+        allItems(cat).forEach(function(it){ tot++; if(state.checked[it.id]) done++; });
+      }
+    });
+    return tot ? done/tot : 0;
+  }
+  function updateBines(){
+    var box = document.getElementById('bines');
+    if(!box) return;
+    var r = binesRatio();
+    if(r <= 0){ box.classList.add('hide'); return; }
+    box.classList.remove('hide');
+    var niv = BINES[0].niv;
+    for(var i=0;i<BINES.length;i++){ if(r >= BINES[i].p) niv = BINES[i].niv; }
+    var fill = document.getElementById('binesFill');
+    if(fill) fill.style.width = Math.round(r*100) + '%';
+    var n = document.getElementById('binesNiv');
+    if(n) n.textContent = niv;
+  }
+
+  // --- La saucisse fugueuse (le raton part à sa poursuite) ---
+  function saucisseGag(){
+    if(!motionOK || raccoonBusy || skunkBusy) return;
+    var f = document.getElementById('feu');
+    if(!f) return;
+    raccoonBusy = true;
+    var s = document.createElement('span');
+    s.className = 'saucisse';
+    f.appendChild(s);
+    s.addEventListener('animationend', function(){ if(s.parentNode) s.parentNode.removeChild(s); });
+    var a = document.createElement('span');
+    a.className = 'ayoye'; a.textContent = 'AYOYE !';
+    a.style.left = '45%'; a.style.bottom = '54px';
+    f.appendChild(a);
+    a.addEventListener('animationend', function(){ if(a.parentNode) a.parentNode.removeChild(a); });
+    bobSay('une saucisse vient de se sauver du feu. Le raton part à sa poursuite. Personne comprend rien.');
+    var r = document.createElement('div');
+    r.className = 'raton'; r.innerHTML = RATON_SVG;
+    r.style.animationDelay = '.3s';
+    f.appendChild(r);
+    puffDust(2, 82);
+    r.addEventListener('animationend', function(){
+      if(r.parentNode) r.parentNode.removeChild(r);
+      raccoonBusy = false;
+    });
+  }
+  var sausageTimer = null;
+  function startSausageWatch(){
+    if(!motionOK || sausageTimer) return;
+    sausageTimer = setInterval(function(){
+      if(!raccoonBusy && !skunkBusy && curFire >= 0.3 && Math.random() < 0.16) saucisseGag();
+    }, 14000);
+  }
+
+  // --- Poutine d'urgence (easter egg) ---
+  var POUTINE_SVG =
+    '<svg viewBox="0 0 124 120" xmlns="http://www.w3.org/2000/svg">' +
+    '<g fill="#eebb4d" stroke="#c9922e" stroke-width="1.2">' +
+    '<rect x="40" y="34" width="8" height="42" rx="3" transform="rotate(-12 44 55)"/>' +
+    '<rect x="58" y="26" width="8" height="48" rx="3" transform="rotate(3 62 50)"/>' +
+    '<rect x="74" y="34" width="8" height="42" rx="3" transform="rotate(13 78 55)"/>' +
+    '<rect x="50" y="40" width="8" height="38" rx="3" transform="rotate(-5 54 59)"/>' +
+    '<rect x="66" y="38" width="8" height="40" rx="3" transform="rotate(9 70 58)"/>' +
+    '</g>' +
+    '<path d="M18 66 L106 66 L96 112 L28 112 Z" fill="#d9b98a"/>' +
+    '<path d="M18 66 L106 66 L103 76 L21 76 Z" fill="#c19c68"/>' +
+    '<ellipse cx="62" cy="70" rx="40" ry="10" fill="#4e3016"/>' +
+    '<ellipse cx="62" cy="69" rx="36" ry="8" fill="#5f3c1d"/>' +
+    '<g fill="#f7f0d8" stroke="#e2d8b4" stroke-width="1">' +
+    '<circle cx="46" cy="68" r="5"/><circle cx="60" cy="71" r="5.5"/><circle cx="74" cy="67" r="5"/>' +
+    '<circle cx="53" cy="65" r="4"/><circle cx="69" cy="65" r="4.5"/>' +
+    '</g></svg>';
+  var poutineBusy = false;
+  function dropPoutine(){
+    if(poutineBusy) return;
+    poutineBusy = true;
+    var el = document.createElement('div');
+    el.className = 'poutine';
+    el.innerHTML = POUTINE_SVG;
+    document.body.appendChild(el);
+    bobSay('poutine d’urgence livrée par les airs. Le feu apprécie moyennement.');
+    pulse('sputter', 460);
+    el.addEventListener('animationend', function(){
+      if(el.parentNode) el.parentNode.removeChild(el);
+      poutineBusy = false;
+    });
+  }
+
+  // --- Badge niaiseux (toast) ---
+  function showBadge(html){
+    var b = document.createElement('div');
+    b.className = 'badge show';
+    b.innerHTML = html;
+    document.body.appendChild(b);
+    b.addEventListener('animationend', function(){ if(b.parentNode) b.parentNode.removeChild(b); });
+  }
+
   // Répliques spéciales quand le raton frappe
   var RATON_BOB = [
     'un raton laveur vient de voler une guimauve. Petit Bob applaudit le crime.',
@@ -1107,6 +1289,11 @@
       state.checked[it.id] = inp.checked;
       if(!inp.checked) delete state.checked[it.id];
       save(); refresh();
+      // coche fantôme: si on spamme le même item, Petit Bob s'impatiente
+      if(spamId === it.id){ spamN++; } else { spamId = it.id; spamN = 1; }
+      clearTimeout(spamT);
+      spamT = setTimeout(function(){ spamId = null; spamN = 0; }, 1500);
+      if(spamN >= 6){ spamN = 0; bobSay('oui oui, c’est encore là. Lâche le lousse, tu vas l’user.'); }
     });
     var box = el('span','box', CHECK);
     var txt = el('span','txt');
@@ -1464,6 +1651,9 @@
   var raccoonTimer = null;
   var skunkBusy = false;
   var skunkTimer = null;
+  var prevRemaining = null;
+  var badgeShown = false;
+  var spamId = null, spamN = 0, spamT = null;
 
   function pulse(cls, ms){
     if(!motionOK) return;
@@ -1714,6 +1904,23 @@
     // le feu réagit à la coche, puis fête à 100%
     fireReact(t.done);
     setFete(p >= 1, initial);
+
+    // rang, baromètre de bines
+    updateRang(p);
+    updateBines();
+
+    // le drame du dernier item + badge à 100%
+    var remaining = t.tot - t.done;
+    if(t.tot > 0){
+      if(remaining === 1 && prevRemaining !== null && prevRemaining !== 1){
+        bobSay('il te reste UN item. C’EST ÇA QUE T’AS OUBLIÉ, LÀ. Respire par le nez.');
+      }
+      if(remaining === 0 && prevRemaining === 1 && !badgeShown){
+        badgeShown = true;
+        showBadge('🏅 Badge débloqué : « J’ai failli oublier le papier de toilette »');
+      }
+    }
+    prevRemaining = remaining;
   }
 
   (async function init(){
@@ -1746,6 +1953,25 @@
     // Le raton laveur guette la guimauve, la moufette guette tout le monde
     startRaccoonWatch();
     startSkunkWatch();
+    startSausageWatch();
+
+    // Poutine d'urgence: tape le titre 5 fois vite, ou le code Konami
+    var titleTaps = 0, titleT = null;
+    var h1 = document.querySelector('h1');
+    if(h1){
+      h1.style.cursor = 'pointer';
+      h1.addEventListener('click', function(){
+        titleTaps++;
+        clearTimeout(titleT);
+        titleT = setTimeout(function(){ titleTaps = 0; }, 1200);
+        if(titleTaps >= 5){ titleTaps = 0; dropPoutine(); }
+      });
+    }
+    var konami = [38,38,40,40,37,39,37,39,66,65], kpos = 0;
+    window.addEventListener('keydown', function(e){
+      if(e.keyCode === konami[kpos]){ kpos++; if(kpos === konami.length){ kpos = 0; dropPoutine(); } }
+      else { kpos = (e.keyCode === konami[0]) ? 1 : 0; }
+    });
 
     // Déclencheurs manuels: on les appelle sur commande
     var cr = document.getElementById('callRaton');

@@ -3,6 +3,16 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.0.0 — 2026-07-01
+
+### Ajouté (grosse fournée de niaiseries)
+- **🌭 La saucisse fugueuse** : de temps en temps, une saucisse se sauve du feu en criant « AYOYE ! » et le raton part à sa poursuite.
+- **💨 Le Baromètre de bines** : une jauge qui monte selon les items de bouffe cochés et prédit le niveau de flatulence de la nuit (de « Brise légère » à « Évacuation générale »).
+- **🏅 Rang de campeur évolutif** : un titre pompeux qui évolue avec l'avancement, de « Ver de terre citadin » à « Seigneur des Tentes ».
+- **🎬 Le drame du dernier item** : quand il ne reste qu'un item, Petit Bob panique (« C'EST ÇA QUE T'AS OUBLIÉ, LÀ ») ; le compléter débloque le badge « J'ai failli oublier le papier de toilette ».
+- **🍟 Poutine d'urgence** (easter egg) : tape le titre 5 fois vite (ou entre le code Konami) et une poutine géante tombe du ciel sur le feu.
+- **👻 Coche fantôme** : si tu spammes le même item, Petit Bob s'impatiente (« lâche le lousse, tu vas l'user »).
+
 ## v1.9.0 — 2026-07-01
 
 ### Ajouté
