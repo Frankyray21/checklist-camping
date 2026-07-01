@@ -138,7 +138,83 @@
     100%{opacity:0; transform:translate(-50%,-90px) scale(.4);}
   }
 
-  .etat{font-size:14px; color:var(--flamme); font-weight:700; margin:4px 0 0; letter-spacing:.4px; min-height:20px;}
+  /* --- Réactions rigolotes du feu --- */
+  .feu{transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
+  .feu.recu{transform:translateY(-3px) scale(1.05);}
+
+  /* Fumée: forte quand le feu est mort, disparaît quand ça chauffe */
+  .smoke{position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
+    width:60px; height:90px; opacity:calc(.65*(1 - var(--fire))); transition:opacity .5s ease; pointer-events:none;}
+  .wisp{position:absolute; bottom:0; left:50%; width:16px; height:16px; border-radius:50%;
+    background:radial-gradient(circle, rgba(197,204,197,.55), rgba(197,204,197,0) 70%); opacity:0;}
+
+  /* Guimauve qui grille quand le feu est assez fort */
+  .gui{position:absolute; right:12px; bottom:20px; width:72px; height:84px;
+    opacity:calc((var(--fire) - .45) * 2.2); transition:opacity .5s ease; pointer-events:none; transform-origin:right bottom;}
+  .gui .stick{position:absolute; right:0; bottom:8px; width:66px; height:3px; border-radius:2px;
+    background:linear-gradient(90deg,#7a5a3a,#a67c48); transform:rotate(-18deg); transform-origin:right center;}
+  .gui .mallow{position:absolute; left:1px; top:19px; width:16px; height:20px; border-radius:7px;
+    background:radial-gradient(circle at 50% 32%, #fff8ee, #efdcc0 68%, #e6c49a 100%);
+    box-shadow:0 0 calc(10px*var(--fire)) rgba(244,169,61,calc(.85*var(--fire)));}
+
+  /* Gerbe d'étincelles créée à chaque coche */
+  .burst{position:absolute; left:50%; bottom:36px; width:5px; height:5px; border-radius:50%;
+    background:radial-gradient(circle,#fff3cf,var(--or) 60%,var(--braise)); opacity:0; pointer-events:none;
+    box-shadow:0 0 6px rgba(251,212,106,.9); animation:burst .9s ease-out forwards;}
+
+  /* Braises qui pleuvent pendant la fête (100%) */
+  .ember{position:absolute; bottom:30px; width:6px; height:6px; border-radius:50%;
+    background:radial-gradient(circle,var(--or),var(--braise) 70%); opacity:0; pointer-events:none;
+    box-shadow:0 0 7px rgba(232,118,60,.8); animation:ember 1.7s ease-in forwards;}
+
+  .compte b{display:inline-block;}
+  .bump{animation:bump .45s cubic-bezier(.34,1.56,.64,1);}
+
+  @media (prefers-reduced-motion: no-preference){
+    .wisp{animation:wisp 3.4s ease-in infinite;}
+    .w1{left:38%; animation-delay:0s;}
+    .w2{left:56%; animation-delay:1.1s;}
+    .w3{left:46%; animation-delay:2.2s;}
+    .gui{animation:guibob 2.8s ease-in-out infinite;}
+    .feu.pouf .flammes{animation:pouf .55s cubic-bezier(.22,1,.36,1);}
+    .feu.pouf .glow{animation:glowpop .55s ease;}
+    .feu.sputter .flammes{animation:sputter .45s ease;}
+    .feu.fete .flammes{animation:roar 1s ease-in-out infinite;}
+    .feu.fete{animation:party 1s ease-in-out infinite;}
+  }
+
+  @keyframes wisp{
+    0%{opacity:0; transform:translate(-50%,0) scale(.6);}
+    20%{opacity:.75;}
+    100%{opacity:0; transform:translate(-50%,-72px) scale(1.35);}
+  }
+  @keyframes pouf{
+    0%{transform:translateX(-50%) scaleY(1) scaleX(1);}
+    28%{transform:translateX(-50%) scaleY(1.42) scaleX(1.12) translateY(-8px);}
+    60%{transform:translateX(-50%) scaleY(.93) scaleX(1.04);}
+    100%{transform:translateX(-50%) scaleY(1) scaleX(1);}
+  }
+  @keyframes sputter{
+    0%,100%{transform:translateX(-50%) scaleY(1);}
+    40%{transform:translateX(-50%) scaleY(.72) scaleX(1.05);}
+  }
+  @keyframes glowpop{0%{filter:blur(6px);} 30%{filter:blur(3px); opacity:1;} 100%{filter:blur(6px);}}
+  @keyframes guibob{0%,100%{transform:translateY(0) rotate(0);} 50%{transform:translateY(-3px) rotate(-3deg);}}
+  @keyframes burst{
+    0%{opacity:0; transform:translate(-50%,0) scale(1);}
+    12%{opacity:1;}
+    100%{opacity:0; transform:translate(calc(-50% + var(--dx,0px)), var(--dy,-80px)) scale(.3);}
+  }
+  @keyframes ember{
+    0%{opacity:0; transform:translateY(0) translateX(0) scale(1);}
+    15%{opacity:1;}
+    100%{opacity:0; transform:translateY(-125px) translateX(var(--dx,0px)) scale(.4);}
+  }
+  @keyframes roar{0%,100%{transform:translateX(-50%) scaleY(1.06) scaleX(1.02);} 50%{transform:translateX(-50%) scaleY(1.2) scaleX(1.08);}}
+  @keyframes party{0%,100%{transform:rotate(-1.6deg);} 50%{transform:rotate(1.6deg);}}
+  @keyframes bump{0%{transform:scale(1);} 40%{transform:scale(1.55);} 100%{transform:scale(1);}}
+
+  .etat{font-size:14px; color:var(--flamme); font-weight:700; margin:4px 0 0; letter-spacing:.4px; min-height:20px; transition:color .3s ease;}
   .compte{font-family:'Anton',sans-serif; font-size:30px; letter-spacing:1px; margin:2px 0 0; color:var(--toile);}
   .compte b{color:var(--braise);}
   .compte small{font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:14px; color:var(--cendre); letter-spacing:0;}
@@ -316,6 +392,7 @@
 
       <div class="feu" id="feu">
         <div class="glow"></div>
+        <div class="smoke"><span class="wisp w1"></span><span class="wisp w2"></span><span class="wisp w3"></span></div>
         <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
         <span class="spark s4"></span><span class="spark s5"></span>
         <div class="flammes">
@@ -325,6 +402,7 @@
         </div>
         <div class="buche b1"></div>
         <div class="buche b2"></div>
+        <div class="gui" aria-hidden="true"><span class="stick"></span><span class="mallow"></span></div>
       </div>
 
       <p class="etat" id="etat">Le feu est pas encore pogné</p>
@@ -593,7 +671,7 @@
     ]}
   ];
 
-  var VERSION = 'v1.1.0';
+  var VERSION = 'v1.2.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{} };
 
@@ -1065,9 +1143,88 @@
     return 'Tout est rangé. Même Petit Bob est impressionné\u00A0!';
   }
 
+  // --- Réactions du feu (le feu vit selon la checklist) ---
+  var motionOK = true;
+  try{ motionOK = !window.matchMedia || window.matchMedia('(prefers-reduced-motion: no-preference)').matches; }catch(e){ motionOK = true; }
+  var prevDone = null;
+  var feteTimer = null;
+
+  function pulse(cls, ms){
+    if(!motionOK) return;
+    var f = document.getElementById('feu');
+    if(!f) return;
+    f.classList.remove(cls);
+    void f.offsetWidth; // force le redémarrage de l'animation
+    f.classList.add(cls);
+    setTimeout(function(){ f.classList.remove(cls); }, ms);
+  }
+
+  function spawnBurst(n){
+    if(!motionOK) return;
+    var f = document.getElementById('feu');
+    if(!f) return;
+    for(var i=0;i<n;i++){
+      var s = document.createElement('span');
+      s.className = 'burst';
+      var dx = (Math.random()*150 - 75);
+      var dy = -(55 + Math.random()*85);
+      s.style.setProperty('--dx', dx.toFixed(0)+'px');
+      s.style.setProperty('--dy', dy.toFixed(0)+'px');
+      s.style.left = (44 + Math.random()*12) + '%';
+      s.style.animationDuration = (0.7 + Math.random()*0.5).toFixed(2)+'s';
+      f.appendChild(s);
+      s.addEventListener('animationend', function(){ if(this.parentNode) this.parentNode.removeChild(this); });
+    }
+  }
+
+  function rainEmber(){
+    var f = document.getElementById('feu');
+    if(!f) return;
+    var e = document.createElement('span');
+    e.className = 'ember';
+    var dx = (Math.random()*90 - 45);
+    e.style.setProperty('--dx', dx.toFixed(0)+'px');
+    e.style.left = (18 + Math.random()*64) + '%';
+    e.style.animationDuration = (1.3 + Math.random()*0.8).toFixed(2)+'s';
+    f.appendChild(e);
+    e.addEventListener('animationend', function(){ if(this.parentNode) this.parentNode.removeChild(this); });
+  }
+
+  function setFete(on, initial){
+    var f = document.getElementById('feu');
+    if(!f) return;
+    if(on){
+      if(!f.classList.contains('fete')){
+        f.classList.add('fete');
+        if(motionOK){
+          if(!initial) spawnBurst(26);          // gros feu d'artifice quand on FINIT
+          if(!feteTimer) feteTimer = setInterval(rainEmber, 240);
+        }
+      }
+    } else {
+      f.classList.remove('fete');
+      if(feteTimer){ clearInterval(feteTimer); feteTimer = null; }
+    }
+  }
+
+  function fireReact(done){
+    if(prevDone === null){ prevDone = done; return; }   // pas de réaction au chargement
+    if(done > prevDone){
+      pulse('pouf', 560);                                 // le feu pogne d'un coup
+      pulse('recu', 220);                                 // petit rebond
+      spawnBurst(7 + Math.floor(Math.random()*4));        // gerbe d'étincelles
+      var nf = document.getElementById('nFait');
+      if(nf){ nf.classList.remove('bump'); void nf.offsetWidth; nf.classList.add('bump'); }
+    } else if(done < prevDone){
+      pulse('sputter', 460);                              // le feu retombe quand on décoche
+    }
+    prevDone = done;
+  }
+
   function refresh(){
     var t = totals();
     var p = t.tot ? t.done/t.tot : 0;
+    var initial = (prevDone === null);
     document.getElementById('feu').style.setProperty('--fire', p.toFixed(3));
     document.getElementById('nFait').textContent = t.done;
     document.getElementById('nTotal').textContent = t.tot;
@@ -1085,6 +1242,9 @@
       if(bar) bar.style.width = (ct.tot?Math.round(ct.done/ct.tot*100):0)+'%';
       if(fr) fr.textContent = ct.done+'/'+ct.tot;
     });
+    // le feu réagit à la coche, puis fête à 100%
+    fireReact(t.done);
+    setFete(p >= 1, initial);
   }
 
   (async function init(){

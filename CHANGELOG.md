@@ -3,6 +3,17 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.2.0 — 2026-07-01
+
+### Ajouté
+- **Le feu réagit à la checklist, façon rigolote** :
+  - À chaque item coché, le feu **pogne d'un coup** (poussée de flammes) et lance une **gerbe d'étincelles**, et le compteur fait un petit *bump*.
+  - Quand on **décoche**, le feu **retombe** (sputter).
+  - Quand le feu est **faible ou mort**, de la **fumée** monte ; elle disparaît à mesure que ça chauffe.
+  - Au-dessus de ~45 %, une **guimauve grille** au-dessus du feu (elle dore avec l'intensité).
+  - À **100 %**, c'est la **fête** : les flammes rugissent, le feu se dandine et une **pluie de braises** démarre, avec un gros feu d'artifice d'étincelles.
+- Toutes les animations respectent `prefers-reduced-motion` (désactivées si l'utilisateur réduit les animations).
+
 ## v1.1.0 — 2026-06-30
 
 ### Ajouté
