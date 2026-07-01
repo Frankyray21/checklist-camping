@@ -188,6 +188,54 @@
     100%{transform:translateX(-310px) translateY(3px); opacity:0;}
   }
 
+  /* La moufette qui fait fuir tout le monde */
+  .mouf{position:absolute; right:6px; bottom:14px; width:66px; height:60px;
+    opacity:0; pointer-events:none; z-index:7; transform:translateX(185px);
+    animation:moufraid 4.6s ease-in-out forwards;
+    filter:drop-shadow(0 0 2px rgba(239,230,211,.5)) drop-shadow(0 3px 5px rgba(0,0,0,.5));}
+  .mouf svg{width:100%; height:100%; display:block;}
+  .stink{position:absolute; right:6px; bottom:20px; width:94px; height:94px; border-radius:50%;
+    transform:scale(.2); opacity:0; pointer-events:none; z-index:6; filter:blur(4px);
+    background:radial-gradient(circle, rgba(158,216,86,.75), rgba(120,182,60,.36) 45%, transparent 72%);
+    animation:stink 2.4s ease-out forwards;}
+  #bob.sacre{animation:sacre .5s ease-in-out;}
+  @keyframes moufraid{
+    0%{transform:translateX(185px) translateY(2px); opacity:0;}
+    8%{opacity:1;}
+    26%{transform:translateX(10px) translateY(0);}
+    32%,54%{transform:translateX(6px) translateY(0);}
+    100%{transform:translateX(-250px) translateY(3px); opacity:0;}
+  }
+  @keyframes stink{
+    0%{opacity:0; transform:scale(.2);}
+    18%{opacity:.92;}
+    100%{opacity:0; transform:translate(-34px,-18px) scale(2.7);}
+  }
+  @keyframes sacre{
+    0%,100%{transform:translateX(0) rotate(0);}
+    20%{transform:translateX(-6px) rotate(-1deg);}
+    50%{transform:translateX(6px) rotate(1deg);}
+    80%{transform:translateX(-3px);}
+  }
+
+  /* Mini-feu collant en haut (reste visible quand on scrolle) */
+  .minifeu{position:relative; width:22px; height:20px; flex:0 0 auto; --mf:0;
+    filter:drop-shadow(0 0 calc(5px*var(--mf)) rgba(244,169,61,.7));}
+  .minifeu .mflame{position:absolute; left:50%; bottom:1px; transform:translateX(-50%);
+    border-radius:50% 50% 50% 50% / 60% 60% 40% 40%; filter:blur(.4px); transform-origin:bottom center;}
+  .minifeu .mf1{width:calc(12px*(.5 + .5*var(--mf))); height:calc(17px*(.32 + .68*var(--mf)));
+    background:linear-gradient(0deg,var(--braise),#c4421f 50%, transparent 100%); opacity:calc(.5 + .5*var(--mf));}
+  .minifeu .mf2{width:calc(6px*(.5 + .5*var(--mf))); height:calc(10px*(.32 + .68*var(--mf)));
+    background:linear-gradient(0deg,var(--or),#fff3cf 60%, transparent 100%); opacity:calc(.55 + .45*var(--mf));}
+  .minipip{position:absolute; left:50%; bottom:0; width:5px; height:2px; border-radius:2px;
+    transform:translateX(-50%); background:#3f2a1c;}
+  @media (prefers-reduced-motion: no-preference){
+    .minifeu .mf1{animation:flick2 1.3s ease-in-out infinite;}
+    .minifeu .mf2{animation:flick3 .9s ease-in-out infinite;}
+    .minifeu.pop{animation:minipop .5s cubic-bezier(.34,1.56,.64,1);}
+  }
+  @keyframes minipop{0%{transform:scale(1);} 32%{transform:scale(1.4) translateY(-1px);} 100%{transform:scale(1);}}
+
   .compte b{display:inline-block;}
   .bump{animation:bump .45s cubic-bezier(.34,1.56,.64,1);}
 
@@ -400,7 +448,7 @@
 <body>
 
   <div class="rail">
-    <span class="pip"></span>
+    <span class="minifeu" id="minifeu" aria-hidden="true"><i class="minipip"></i><i class="mflame mf1"></i><i class="mflame mf2"></i></span>
     <div class="railbar"><i id="railFill"></i></div>
     <span class="railpct" id="railPct">0%</span>
   </div>
@@ -692,7 +740,7 @@
     ]}
   ];
 
-  var VERSION = 'v1.3.0';
+  var VERSION = 'v1.4.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{} };
 
@@ -834,6 +882,36 @@
     '<ellipse cx="10" cy="32" rx="3" ry="2.3" fill="#3a3d42"/>' +
     '</svg>' +
     '<span class="loot"></span>';
+
+  // Répliques quand la moufette débarque
+  var MOUF_BOB = [
+    'une moufette est arrivée. Le raton, Petit Bob pis les maringouins ont sacré leur camp.',
+    'la moufette a levé la queue. Le débat était clos.',
+    'tout le monde a couru. La moufette, elle, a pris son temps.',
+    'Petit Bob « gère la situation »… d’un autre camping.',
+    'la moufette a gagné le terrain sans se battre. Respect.',
+    'Petit Bob a changé de code postal à cause d’une moufette.'
+  ];
+  function moufBob(){ return MOUF_BOB[Math.floor(Math.random()*MOUF_BOB.length)]; }
+
+  // La moufette (SVG, tournée vers la gauche, queue relevée)
+  var MOUF_SVG =
+    '<svg viewBox="0 0 54 50" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M40 44 C 33 32, 34 14, 44 8 C 53 12, 52 30, 47 40 C 45 36, 43 38, 40 44 Z" fill="#1c1f22"/>' +
+    '<path d="M43 40 C 39 30, 40 16, 46 11 C 49 17, 48 30, 45 38 Z" fill="#f1ede1"/>' +
+    '<ellipse cx="22" cy="34" rx="14" ry="9.5" fill="#1c1f22"/>' +
+    '<path d="M9 30 C 17 26, 30 27, 38 33 C 31 30, 18 30, 11 34 Z" fill="#f1ede1"/>' +
+    '<ellipse cx="16" cy="43" rx="3" ry="2.2" fill="#141619"/>' +
+    '<ellipse cx="26" cy="43" rx="3" ry="2.2" fill="#141619"/>' +
+    '<circle cx="12" cy="27" r="9" fill="#1c1f22"/>' +
+    '<path d="M12 19 C 14 22, 14 28, 12 31 C 10 28, 10 22, 12 19 Z" fill="#f1ede1"/>' +
+    '<circle cx="6" cy="20" r="2.4" fill="#1c1f22"/>' +
+    '<circle cx="18" cy="19" r="2.4" fill="#1c1f22"/>' +
+    '<path d="M12 25 L 2 28 L 12 31 Z" fill="#141619"/>' +
+    '<circle cx="3" cy="28" r="1.7" fill="#e8909a"/>' +
+    '<circle cx="9" cy="26" r="1.7" fill="#f3efe4"/>' +
+    '<circle cx="9.3" cy="26.2" r="0.9" fill="#1c1f22"/>' +
+    '</svg>';
 
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
@@ -1208,6 +1286,8 @@
   var curFire = 0;
   var raccoonBusy = false;
   var raccoonTimer = null;
+  var skunkBusy = false;
+  var skunkTimer = null;
 
   function pulse(cls, ms){
     if(!motionOK) return;
@@ -1275,6 +1355,9 @@
       spawnBurst(7 + Math.floor(Math.random()*4));        // gerbe d'étincelles
       var nf = document.getElementById('nFait');
       if(nf){ nf.classList.remove('bump'); void nf.offsetWidth; nf.classList.add('bump'); }
+      var mini = document.getElementById('minifeu');
+      if(mini){ mini.classList.remove('pop'); void mini.offsetWidth; mini.classList.add('pop');
+        setTimeout(function(){ mini.classList.remove('pop'); }, 520); }
     } else if(done < prevDone){
       pulse('sputter', 460);                              // le feu retombe quand on décoche
     }
@@ -1302,6 +1385,7 @@
       // quelques miettes d'étincelles au passage
       spawnBurst(4);
     }, 1550);
+    r._grab = grab;
 
     r.addEventListener('animationend', function(){
       clearTimeout(grab);
@@ -1319,12 +1403,79 @@
     }, 11000);
   }
 
+  // Le raton panique et décampe (quand la moufette arrive)
+  function raccoonFlee(){
+    var f = document.getElementById('feu');
+    var r = f && f.querySelector('.raton');
+    if(!r) return;
+    if(r._grab) clearTimeout(r._grab);
+    var cs = getComputedStyle(r).transform;
+    r.style.animation = 'none';
+    if(cs && cs !== 'none') r.style.transform = cs;   // fige la position actuelle
+    requestAnimationFrame(function(){
+      r.style.transition = 'transform .5s ease-in, opacity .5s ease-in';
+      r.style.transform = 'translateX(-360px)';
+      r.style.opacity = '0';
+    });
+    var gui = f.querySelector('.gui');
+    var done = function(){
+      if(r.parentNode) r.parentNode.removeChild(r);
+      if(gui) gui.classList.remove('vole');   // la guimauve repousse
+      raccoonBusy = false;
+    };
+    r.addEventListener('transitionend', done);
+    setTimeout(done, 750);
+  }
+
+  // La moufette débarque, lève la queue, pis tout le monde décrisse
+  function skunkRaid(){
+    if(!motionOK || skunkBusy) return;
+    var f = document.getElementById('feu');
+    if(!f) return;
+    skunkBusy = true;
+
+    var m = document.createElement('div');
+    m.className = 'mouf';
+    m.innerHTML = MOUF_SVG;
+    f.appendChild(m);
+
+    // PSCHITT: elle arrose, tout le monde décampe
+    var spray = setTimeout(function(){
+      var stink = document.createElement('span');
+      stink.className = 'stink';
+      f.appendChild(stink);
+      stink.addEventListener('animationend', function(){ if(this.parentNode) this.parentNode.removeChild(this); });
+      raccoonFlee();                                  // le raton sacre son camp
+      bobSay(moufBob());                              // Petit Bob commente de loin
+      pulse('recu', 220); pulse('sputter', 460);      // même le feu recule
+      var bob = document.getElementById('bob');
+      if(bob){ bob.classList.remove('sacre'); void bob.offsetWidth; bob.classList.add('sacre');
+        setTimeout(function(){ bob.classList.remove('sacre'); }, 620); }
+    }, 1450);
+
+    m.addEventListener('animationend', function(){
+      clearTimeout(spray);
+      if(m.parentNode) m.parentNode.removeChild(m);
+      skunkBusy = false;
+    });
+  }
+
+  function startSkunkWatch(){
+    if(!motionOK || skunkTimer) return;
+    // plus rare que le raton; peut débarquer dès qu'il y a un peu de feu
+    skunkTimer = setInterval(function(){
+      if(!skunkBusy && curFire >= 0.12 && Math.random() < 0.17) skunkRaid();
+    }, 17000);
+  }
+
   function refresh(){
     var t = totals();
     var p = t.tot ? t.done/t.tot : 0;
     curFire = p;
     var initial = (prevDone === null);
     document.getElementById('feu').style.setProperty('--fire', p.toFixed(3));
+    var mini = document.getElementById('minifeu');
+    if(mini) mini.style.setProperty('--mf', p.toFixed(3));
     document.getElementById('nFait').textContent = t.done;
     document.getElementById('nTotal').textContent = t.tot;
     document.getElementById('etat').textContent = etatTexte(p);
@@ -1364,8 +1515,9 @@
       }
     }catch(e){}
 
-    // Le raton laveur guette la guimauve
+    // Le raton laveur guette la guimauve, la moufette guette tout le monde
     startRaccoonWatch();
+    startSkunkWatch();
 
     // PWA: enregistrement du service worker pour le mode hors-ligne
     if('serviceWorker' in navigator){

@@ -3,6 +3,12 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.4.0 — 2026-07-01
+
+### Ajouté
+- **La moufette qui fait fuir tout le monde** 🦨 : de temps en temps (plus rare que le raton), une moufette débarque, lève la queue et lâche un **nuage vert** puant. Le **raton laveur panique et décampe** s'il est là, le feu recule, la carte de Petit Bob sursaute, et Petit Bob commente le désastre de loin (« Petit Bob a changé de code postal à cause d'une moufette »).
+- **Mini-feu collant dans le hero** : une petite version du feu de camp reste visible dans la barre du haut quand on scrolle la liste. Elle grossit selon la progression et fait un petit *poof* à chaque item coché, comme le grand feu.
+
 ## v1.3.0 — 2026-07-01
 
 ### Ajouté
