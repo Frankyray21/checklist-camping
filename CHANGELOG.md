@@ -3,6 +3,13 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.4.1 — 2026-07-01
+
+### Corrigé (passe de révision)
+- **Synchro du camp partagé** : la mise à jour venant de l'autre appareil n'écrase plus ce que tu es **en train d'écrire** (champ « Ajouter un item ») ; elle attend le prochain tour de synchro.
+- **Notes orphelines** : supprimer un item personnalisé efface aussi son commentaire 💬 de la sauvegarde.
+- **Poutine d'urgence** : taper le titre 5 fois vite sur mobile ne sélectionne plus le texte du titre.
+
 ## v2.4.0 — 2026-07-01
 
 ### Ajouté

@@ -141,6 +141,7 @@
     font-size:clamp(40px,12vw,62px); line-height:.92;
     margin:0; letter-spacing:1px; text-transform:uppercase;
     color:var(--toile);
+    -webkit-user-select:none; user-select:none;   /* taper 5x pour la poutine sans sélectionner le texte */
   }
   .sous{margin:8px 0 0; color:var(--cendre); font-size:15px;}
 
@@ -930,7 +931,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.4.0';
+  var VERSION = 'v2.4.1';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1500,7 +1501,11 @@
     fetch(CAMP_BIN(campId), { cache:'no-store' })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(data){
-        if(data && data.ts && data.ts > campTs){ campTs = data.ts; applyRemoteList(data.list); }
+        if(!data || !data.ts || data.ts <= campTs) return;
+        // si t'es en train d'écrire, on n'écrase pas ton champ: on réessaie au prochain tour
+        var ae = document.activeElement;
+        if(ae && ae.tagName === 'INPUT' && ae.type === 'text') return;
+        campTs = data.ts; applyRemoteList(data.list);
       }).catch(function(){});
   }
   function startSync(){
@@ -1703,8 +1708,9 @@
     del.addEventListener('click', function(ev){
       ev.preventDefault(); ev.stopPropagation();
       if(isCustom){
-        // item personnalis\u00E9: on l'efface pour de bon
+        // item personnalis\u00E9: on l'efface pour de bon (avec sa note, pour pas laisser de tra\u00EEneries)
         state.custom[cat.id] = (state.custom[cat.id]||[]).filter(function(x){ return x.id !== it.id; });
+        if(state.notes) delete state.notes[it.id];
       } else {
         // item de base: on le retire (r\u00E9cup\u00E9rable avec \u00AB R\u00E9tablir \u00BB)
         state.removed[it.id] = true;
