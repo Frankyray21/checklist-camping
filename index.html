@@ -516,6 +516,11 @@
   .edit{flex:0 0 auto; border:0; background:transparent; color:#bcae93; cursor:pointer;
     width:28px; height:28px; border-radius:8px; font-size:15px; line-height:1; align-self:center;}
   .edit:hover{background:rgba(33,51,42,.06); color:var(--ciel);}
+  .cmt{flex:0 0 auto; border:0; background:transparent; cursor:pointer; opacity:.55;
+    width:28px; height:28px; border-radius:8px; font-size:14px; line-height:1; align-self:center;}
+  .cmt:hover{background:rgba(33,51,42,.06); opacity:1;}
+  .usernote{display:block; font-size:12.5px; color:var(--braise); margin-top:3px; line-height:1.35;
+    padding-left:9px; border-left:2px solid rgba(232,118,60,.45); font-style:italic; word-break:break-word;}
 
   .ajout{display:flex; gap:8px; padding:8px 8px 6px;}
   .ajout input{
@@ -925,9 +930,9 @@
     ]}
   ];
 
-  var VERSION = 'v2.3.1';
+  var VERSION = 'v2.4.0';
   var KEY = 'camping:tente:v2';
-  var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{} };
+  var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
   // Persistance: localStorage si dispo, sinon repli en mémoire (navigation privée, etc.)
   var memStore = {};
@@ -954,6 +959,7 @@
         if(typeof saved.vols === 'number') state.vols = saved.vols;
         if(typeof saved.voeux === 'number') state.voeux = saved.voeux;
         if(saved.edits) state.edits = saved.edits;
+        if(saved.notes) state.notes = saved.notes;
         if(saved.open) state.open = Object.assign(state.open, saved.open);
       }
     }catch(e){ /* première ouverture ou stockage indispo: on garde le défaut */ }
@@ -1424,7 +1430,7 @@
     } else { window.prompt('Copie ce lien :', link); }
   }
   function shareLink(){
-    var subset = { checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits };
+    var subset = { checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits, notes:state.notes };
     var enc;
     try{ enc = b64enc(JSON.stringify(subset)); }catch(e){ return; }
     var link = location.origin + location.pathname + '#l=' + enc;
@@ -1447,6 +1453,7 @@
     if(data.custom) state.custom = data.custom;
     if(data.removed) state.removed = data.removed;
     if(data.edits) state.edits = data.edits;
+    if(data.notes) state.notes = data.notes;
     save(); render();
     showBadge('🏕️ Liste partagée chargée !');
   }
@@ -1458,7 +1465,7 @@
   var campId = null, campTs = 0, syncTimer = null, pushT = null, applyingRemote = false;
 
   function campPayload(){
-    return { list:{ checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits }, ts: Date.now() };
+    return { list:{ checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits, notes:state.notes }, ts: Date.now() };
   }
   function persistLocalRaw(){
     try{ var raw = JSON.stringify(state); if(hasStore) window.localStorage.setItem(KEY, raw); else memStore[KEY] = raw; }catch(e){}
@@ -1470,6 +1477,7 @@
     state.custom  = list.custom  || {};
     state.removed = list.removed || {};
     state.edits   = list.edits   || {};
+    state.notes   = list.notes   || {};
     persistLocalRaw();
     render();
     applyingRemote = false;
@@ -1650,7 +1658,25 @@
     var nm = itemName(it);
     txt.appendChild(el('span','nm', nm));
     if(it.nt) txt.appendChild(el('span','nt', it.nt));
+    var un = state.notes && state.notes[it.id];
+    if(un) txt.appendChild(el('span','usernote', un));
     row.appendChild(inp); row.appendChild(box); row.appendChild(txt);
+
+    // Commentaire perso sous l'item
+    var cmt = el('button','cmt','\uD83D\uDCAC');
+    cmt.type='button';
+    cmt.setAttribute('aria-label','Commentaire sur '+nm);
+    cmt.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      var cur = (state.notes && state.notes[it.id]) || '';
+      var v = window.prompt('Commentaire sur \u00AB '+nm+' \u00BB :', cur);
+      if(v === null) return;
+      v = v.trim();
+      if(!state.notes) state.notes = {};
+      if(v) state.notes[it.id] = v; else delete state.notes[it.id];
+      save(); render();
+    });
+    row.appendChild(cmt);
 
     // Modifier le texte de l'item (d\u00E9j\u00E0 l\u00E0 ou personnalis\u00E9)
     var edit = el('button','edit','\u270E');
@@ -1765,6 +1791,7 @@
           + '<span class="pd-box' + (on ? ' on' : '') + '">' + (on ? CHECKP : '') + '</span>'
           + '<span class="pd-txt"><span class="pd-nm">' + esc(itemName(it)) + '</span>'
           + (it.nt ? ' <span class="pd-note">· ' + esc(it.nt) + '</span>' : '')
+          + ((state.notes && state.notes[it.id]) ? '<span class="pd-note" style="display:block">💬 ' + esc(state.notes[it.id]) + '</span>' : '')
           + '</span></div>';
       });
       html += '</section>';
@@ -1860,6 +1887,8 @@
       allItems(cat).forEach(function(it){
         var on=!!state.checked[it.id];
         var nm=itemName(it), note=it.nt||'';
+        var un3 = state.notes && state.notes[it.id];
+        if(un3) note = note ? (note + '   ·   ' + un3) : un3;
         var sep='   ·   ';
         var sameW = tw(nm,10) + (note? tw(sep+note,9) : 0);
         var wrap = note && (16 + sameW > CW);

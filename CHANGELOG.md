@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.4.0 — 2026-07-01
+
+### Ajouté
+- **💬 Commentaire sous les items** : un bouton 💬 sur chaque item permet d'écrire une note perso qui s'affiche sous le nom (ex. « prendre la grande tente », « demander à maman »). Le commentaire est sauvegardé, transféré dans le **partage par lien** et la **synchro du camp partagé**, et apparaît dans le **PDF**.
+
 ## v2.3.1 — 2026-07-01
 
 ### Modifié
