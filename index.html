@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.6.0';
+  var VERSION = 'v2.6.1';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1529,9 +1529,12 @@
     save(); render();
     if(campId){
       clearTimeout(pushT);  // évite un 2e envoi identique programmé par save() juste avant
-      pushCamp();  // camp déjà actif: on rediffuse tout de suite (pas d'attente du debounce),
-                   // pour gagner la course contre le pull initial qui pourrait sinon écraser ce chargement
-      showBadge('🏕️ Liste partagée chargée et envoyée au camp !');
+      showBadge('🏕️ Liste chargée. Envoi au camp…');
+      pushCamp(function(ok){  // diffusion immédiate (gagne la course contre le pull initial),
+        showBadge(ok           // et on confirme pour de vrai, pas juste "envoyé" à l'aveugle
+          ? '📡 Envoyé au camp avec succès !'
+          : '⚠️ Chargé sur cet appareil, mais l’envoi au camp a échoué (réseau).');
+      });
     } else {
       showBadge('🏕️ Liste partagée chargée !');
     }
@@ -1569,6 +1572,15 @@
   function CAMP_BIN(id){ return FIREBASE_URL + '/camps/' + id + '.json'; }
   var CAMPKEY = 'camping:camp';
   var campId = null, campTs = 0, syncTimer = null, pushT = null, applyingRemote = false;
+  var pushFailNotified = false, pullFailNotified = false;
+  var campStatusOk = null; // null=inconnu, true=dernière synchro réussie, false=en échec
+  function noteCampStatus(ok){
+    campStatusOk = ok;
+    var el2 = document.getElementById('campStatus');
+    if(!el2) return;
+    el2.textContent = ok ? '🟢 Synchro avec le camp OK' : '🔴 Problème de connexion au camp';
+    el2.style.color = ok ? 'var(--ciel)' : 'var(--braise)';
+  }
 
   function campPayload(){
     return { list:{ checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits, notes:state.notes }, ts: Date.now() };
@@ -1593,25 +1605,48 @@
     clearTimeout(pushT);
     pushT = setTimeout(pushCamp, 1200);
   }
-  function pushCamp(){
-    if(!campId) return;
+  function pushCamp(onDone){
+    if(!campId){ if(onDone) onDone(false); return; }
     var payload = campPayload();
     fetch(CAMP_BIN(campId), { method:'PUT',
       headers:{ 'Content-Type':'application/json' },
       body:JSON.stringify(payload) })
-      .then(function(){ campTs = payload.ts; }).catch(function(){});
+      .then(function(res){
+        if(!res.ok) throw new Error('http ' + res.status);
+        campTs = payload.ts;
+        pushFailNotified = false;
+        noteCampStatus(true);
+        if(onDone) onDone(true);
+      })
+      .catch(function(){
+        if(!pushFailNotified){
+          pushFailNotified = true;
+          showBadge('⚠️ Le camp partagé n’a pas reçu tes changements (réseau). On réessaiera.');
+        }
+        noteCampStatus(false);
+        if(onDone) onDone(false);
+      });
   }
   function pullCamp(){
     if(!campId || document.hidden) return;
     fetch(CAMP_BIN(campId), { cache:'no-store' })
-      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(r){ if(!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function(data){
+        pullFailNotified = false;
+        noteCampStatus(true);
         if(!data || !data.ts || data.ts <= campTs) return;
         // si t'es en train d'écrire, on n'écrase pas ton champ: on réessaie au prochain tour
         var ae = document.activeElement;
         if(ae && ae.tagName === 'INPUT' && ae.type === 'text') return;
         campTs = data.ts; applyRemoteList(data.list);
-      }).catch(function(){});
+      })
+      .catch(function(){
+        if(!pullFailNotified){
+          pullFailNotified = true;
+          showBadge('⚠️ Connexion au camp partagé impossible pour l’instant. Nouvel essai dans 6s.');
+        }
+        noteCampStatus(false);
+      });
   }
   function startSync(){
     if(syncTimer) return;
@@ -2161,6 +2196,17 @@
       }
     });
     pied.appendChild(camp);
+
+    if(campId){
+      var campStatusEl = el('p','campstatus');
+      campStatusEl.id = 'campStatus';
+      campStatusEl.style.cssText = 'font-size:12px; margin:2px 0 0; min-height:16px; font-weight:700;';
+      if(campStatusOk !== null){
+        campStatusEl.textContent = campStatusOk ? '🟢 Synchro avec le camp OK' : '🔴 Problème de connexion au camp';
+        campStatusEl.style.color = campStatusOk ? 'var(--ciel)' : 'var(--braise)';
+      }
+      pied.appendChild(campStatusEl);
+    }
 
     var inst = makeInstallControl();
     if(inst) pied.appendChild(inst);

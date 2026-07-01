@@ -3,6 +3,12 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.6.1 — 2026-07-01
+
+### Corrigé
+- **Diagnostic honnête du camp partagé** : les envois et réceptions vers Firebase échouaient auparavant en silence — le badge « envoyé au camp » s'affichait même si l'envoi réseau échouait réellement. Maintenant, le succès n'est confirmé qu'une fois vérifié (« 📡 Envoyé au camp avec succès ! »), et un échec réel est signalé clairement (sans spammer si plusieurs tentatives échouent d'affilée).
+- **Indicateur de synchro** : un petit statut 🟢/🔴 apparaît sous le bouton du camp partagé pour voir en tout temps si la connexion fonctionne.
+
 ## v2.6.0 — 2026-07-01
 
 ### Ajouté
