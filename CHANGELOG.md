@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.6.0 — 2026-07-01
+
+### Ajouté
+- **📋 Coller une liste** : nouveau bouton dans le pied de page pour appliquer un lien de liste partagée en le collant directement dans l'app déjà ouverte. Contourne un vrai problème rencontré : coller un lien `#l=...` dans la barre d'un onglet déjà ouvert ne recharge pas toujours la page dans certains navigateurs, donc le lien ne s'applique jamais silencieusement (aucune erreur, mais rien ne se passe). Le nouveau bouton fonctionne dans tous les cas, sans dépendre d'une navigation fraîche.
+
 ## v2.5.2 — 2026-07-01
 
 ### Corrigé
