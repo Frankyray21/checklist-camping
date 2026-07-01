@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.7.0 — 2026-07-01
+
+### Ajouté
+- **Coucher de soleil selon l'avancement** : le ciel se réchauffe à mesure que tu coches ta liste. Nuit froide et vide au départ, puis dégradé crépuscule (mauve, rose, orange, doré à l'horizon) de plus en plus présent jusqu'à un vrai coucher de soleil à 100 %. L'intensité est plafonnée pour garder les textes bien lisibles, et la transition est douce à chaque coche.
+
 ## v1.6.0 — 2026-07-01
 
 ### Ajouté

@@ -47,6 +47,22 @@
     line-height:1.45;
   }
 
+  /* Coucher de soleil qui se réchauffe selon l'avancement */
+  .sky{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    opacity:0; transition:opacity 1s ease;
+    background:linear-gradient(to bottom,
+      #10203c 0%,
+      #2a2b52 22%,
+      #5b3b6b 40%,
+      #a34f70 54%,
+      #d9713f 64%,
+      #e79a43 70%,
+      #6c4330 78%,
+      #26201c 100%);
+  }
+  @media (prefers-reduced-motion: reduce){ .sky{ transition:none; } }
+
   /* Barre fine collante en haut */
   .rail{
     position:sticky; top:0; z-index:50;
@@ -476,6 +492,8 @@
 </head>
 <body>
 
+  <div class="sky" id="sky" aria-hidden="true"></div>
+
   <div class="rail">
     <span class="minifeu" id="minifeu" aria-hidden="true"><i class="minipip"></i><i class="mflame mf1"></i><i class="mflame mf2"></i></span>
     <div class="railbar"><i id="railFill"></i></div>
@@ -775,7 +793,7 @@
     ]}
   ];
 
-  var VERSION = 'v1.6.0';
+  var VERSION = 'v1.7.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0 };
 
@@ -1554,6 +1572,8 @@
     document.getElementById('feu').style.setProperty('--fire', p.toFixed(3));
     var mini = document.getElementById('minifeu');
     if(mini) mini.style.setProperty('--mf', p.toFixed(3));
+    var sky = document.getElementById('sky');
+    if(sky) sky.style.opacity = (p * 0.72).toFixed(3);   // le ciel se réchauffe (plafonné pour rester lisible)
     document.getElementById('nFait').textContent = t.done;
     document.getElementById('nTotal').textContent = t.tot;
     document.getElementById('etat').textContent = etatTexte(p);
