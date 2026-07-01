@@ -3,6 +3,17 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.1.0 — 2026-07-01
+
+### Ajouté
+- **🚜 Tracteur & machinerie lourde** : un tracteur, une pelle mécanique, un bulldozer ou un camion benne traversent le camping (fumée d'échappement incluse). Bouton **« Machinerie »** pour les appeler à volonté, plus des passages au hasard.
+- **✎ Modifier un item déjà là** : un bouton crayon sur chaque item permet de renommer le texte (items de base ou personnalisés). La modification se répercute dans le PDF.
+- **🎁 Carte de score partageable** : bouton « Ma carte de camp » qui génère une image (canvas, sans librairie) avec tes stats (rang, items, guimauves volées, vœux, niveau de bines), partagée via le partage natif du téléphone ou téléchargée.
+
+### Modifié
+- **Petit Bob ne change plus tout seul** : il change seulement quand tu tapes dessus ou quand tu coches un item (fini la rotation automatique).
+- **Le feu reste en en-tête** : le mini-feu de la barre du haut est plus gros et plus vivant, bien visible quand on scrolle.
+
 ## v2.0.0 — 2026-07-01
 
 ### Ajouté (grosse fournée de niaiseries)

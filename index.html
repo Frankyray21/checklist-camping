@@ -279,16 +279,17 @@
   }
 
   /* Mini-feu collant en haut (reste visible quand on scrolle) */
-  .minifeu{position:relative; width:22px; height:20px; flex:0 0 auto; --mf:0;
-    filter:drop-shadow(0 0 calc(5px*var(--mf)) rgba(244,169,61,.7));}
-  .minifeu .mflame{position:absolute; left:50%; bottom:1px; transform:translateX(-50%);
+  .minifeu{position:relative; width:30px; height:26px; flex:0 0 auto; --mf:0;
+    filter:drop-shadow(0 0 calc(7px*(.3 + .7*var(--mf))) rgba(244,169,61,.75));}
+  .minifeu .mflame{position:absolute; left:50%; bottom:3px; transform:translateX(-50%);
     border-radius:50% 50% 50% 50% / 60% 60% 40% 40%; filter:blur(.4px); transform-origin:bottom center;}
-  .minifeu .mf1{width:calc(12px*(.5 + .5*var(--mf))); height:calc(17px*(.32 + .68*var(--mf)));
-    background:linear-gradient(0deg,var(--braise),#c4421f 50%, transparent 100%); opacity:calc(.5 + .5*var(--mf));}
-  .minifeu .mf2{width:calc(6px*(.5 + .5*var(--mf))); height:calc(10px*(.32 + .68*var(--mf)));
-    background:linear-gradient(0deg,var(--or),#fff3cf 60%, transparent 100%); opacity:calc(.55 + .45*var(--mf));}
-  .minipip{position:absolute; left:50%; bottom:0; width:5px; height:2px; border-radius:2px;
-    transform:translateX(-50%); background:#3f2a1c;}
+  .minifeu .mf1{width:calc(17px*(.55 + .45*var(--mf))); height:calc(23px*(.4 + .6*var(--mf)));
+    background:linear-gradient(0deg,var(--braise),#c4421f 50%, transparent 100%); opacity:calc(.6 + .4*var(--mf));}
+  .minifeu .mf2{width:calc(9px*(.55 + .45*var(--mf))); height:calc(14px*(.4 + .6*var(--mf)));
+    background:linear-gradient(0deg,var(--or),#fff3cf 60%, transparent 100%); opacity:calc(.65 + .35*var(--mf));}
+  .minipip{position:absolute; left:50%; bottom:0; width:16px; height:5px; border-radius:3px;
+    transform:translateX(-50%) rotate(-6deg); background:linear-gradient(180deg,#6b4a32,#3f2a1c);
+    box-shadow:0 0 calc(6px*var(--mf)) rgba(232,118,60,.6);}
   @media (prefers-reduced-motion: no-preference){
     .minifeu .mf1{animation:flick2 1.3s ease-in-out infinite;}
     .minifeu .mf2{animation:flick3 .9s ease-in-out infinite;}
@@ -358,6 +359,20 @@
     display:flex; align-items:center; gap:8px; text-align:center; line-height:1.3;}
   .badge.show{animation:badge 4.4s ease forwards;}
   @keyframes badge{0%{opacity:0; transform:translateX(-50%) translateY(20px);} 9%,82%{opacity:1; transform:translateX(-50%) translateY(0);} 100%{opacity:0; transform:translateX(-50%) translateY(20px);}}
+
+  /* Tracteur & machinerie lourde */
+  .machine{position:absolute; right:0; bottom:4px; width:98px; height:58px; z-index:6; pointer-events:none;
+    transform:translateX(215px); animation:machine 5s linear forwards;
+    filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));}
+  .machine svg{width:100%; height:100%; display:block;}
+  .fumee{position:absolute; left:40%; top:2px; width:11px; height:11px; border-radius:50%; z-index:6; pointer-events:none;
+    background:radial-gradient(circle, rgba(120,120,120,.6), transparent 70%); opacity:0; animation:fumee 1.5s ease-out forwards;}
+  @media (prefers-reduced-motion: no-preference){
+    .machine svg{animation:jolt .18s ease-in-out infinite; transform-origin:bottom center;}
+  }
+  @keyframes machine{0%{transform:translateX(215px);} 100%{transform:translateX(-345px);}}
+  @keyframes jolt{0%,100%{transform:translateY(0);} 50%{transform:translateY(-1.5px);}}
+  @keyframes fumee{0%{opacity:0; transform:translate(0,0) scale(.5);} 20%{opacity:.7;} 100%{opacity:0; transform:translate(7px,-32px) scale(1.7);}}
 
   /* Bibittes qui trottinent + poussière + bouffées de puanteur */
   .gui.show{opacity:1 !important;}
@@ -498,6 +513,9 @@
   .del{flex:0 0 auto; border:0; background:transparent; color:#bcae93; cursor:pointer;
     width:28px; height:28px; border-radius:8px; font-size:18px; line-height:1; align-self:center;}
   .del:hover{background:rgba(33,51,42,.06); color:var(--braise);}
+  .edit{flex:0 0 auto; border:0; background:transparent; color:#bcae93; cursor:pointer;
+    width:28px; height:28px; border-radius:8px; font-size:15px; line-height:1; align-self:center;}
+  .edit:hover{background:rgba(33,51,42,.06); color:var(--ciel);}
 
   .ajout{display:flex; gap:8px; padding:8px 8px 6px;}
   .ajout input{
@@ -640,6 +658,7 @@
       <div class="zoo">
         <button class="zoobtn" id="callRaton" type="button">🦝 Appeler le raton</button>
         <button class="zoobtn" id="callMouf" type="button">🦨 Appeler la moufette</button>
+        <button class="zoobtn" id="callMachine" type="button">🚜 Machinerie</button>
       </div>
       <p class="vols hide" id="vols"></p>
 
@@ -906,9 +925,9 @@
     ]}
   ];
 
-  var VERSION = 'v2.0.0';
+  var VERSION = 'v2.1.0';
   var KEY = 'camping:tente:v2';
-  var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0 };
+  var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{} };
 
   // Persistance: localStorage si dispo, sinon repli en mémoire (navigation privée, etc.)
   var memStore = {};
@@ -933,6 +952,8 @@
         if(saved.custom) state.custom = saved.custom;
         if(saved.removed) state.removed = saved.removed;
         if(typeof saved.vols === 'number') state.vols = saved.vols;
+        if(typeof saved.voeux === 'number') state.voeux = saved.voeux;
+        if(saved.edits) state.edits = saved.edits;
         if(saved.open) state.open = Object.assign(state.open, saved.open);
       }
     }catch(e){ /* première ouverture ou stockage indispo: on garde le défaut */ }
@@ -949,6 +970,9 @@
       }catch(e){}
     }, 120);
   }
+
+  // nom affiché (avec surcharge éditable)
+  function itemName(it){ return (state.edits && state.edits[it.id]) || it.nm; }
 
   function visibleDefaults(cat){
     return cat.items.filter(function(it){ return !state.removed[it.id]; });
@@ -1073,6 +1097,7 @@
   ];
   var wishLast = -1;
   function makeWish(){
+    state.voeux = (state.voeux || 0) + 1; save();  // pour la carte de score
     shootingStar();                               // une étoile file (si le mouvement est permis)
     var i = wishLast;
     while(i === wishLast && WISH_BOB.length > 1){ i = Math.floor(Math.random()*WISH_BOB.length); }
@@ -1206,6 +1231,187 @@
     b.addEventListener('animationend', function(){ if(b.parentNode) b.parentNode.removeChild(b); });
   }
 
+  // --- Carte de score partageable ("Bilan de camp") ---
+  function cardStats(){
+    var t = totals();
+    var p = t.tot ? t.done/t.tot : 0;
+    var rang = RANGS[0].nom;
+    for(var i=0;i<RANGS.length;i++){ if(p >= RANGS[i].p) rang = RANGS[i].nom; }
+    var r = binesRatio();
+    var niv = BINES[0].niv;
+    for(var j=0;j<BINES.length;j++){ if(r >= BINES[j].p) niv = BINES[j].niv; }
+    return { done:t.done, tot:t.tot, pct:Math.round(p*100), rang:rang,
+      vols:state.vols||0, voeux:state.voeux||0, bines:(r>0?niv:'Pas encore') };
+  }
+  function spacedText(ctx, txt, cx, y, sp){
+    var w=0, i;
+    for(i=0;i<txt.length;i++){ w += ctx.measureText(txt[i]).width + sp; }
+    w -= sp;
+    var x = cx - w/2, prev = ctx.textAlign; ctx.textAlign = 'left';
+    for(i=0;i<txt.length;i++){ ctx.fillText(txt[i], x, y); x += ctx.measureText(txt[i]).width + sp; }
+    ctx.textAlign = prev;
+  }
+  function drawFlame(ctx, cx, by, sc){
+    ctx.save();
+    var rg = ctx.createRadialGradient(cx, by-70*sc, 8, cx, by-70*sc, 170*sc);
+    rg.addColorStop(0,'rgba(244,169,61,.55)'); rg.addColorStop(1,'rgba(244,169,61,0)');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(cx, by-70*sc, 170*sc, 0, 7); ctx.fill();
+    function flame(w,h,col){
+      ctx.beginPath(); ctx.moveTo(cx,by);
+      ctx.bezierCurveTo(cx-w, by-h*0.4, cx-w*0.5, by-h*0.92, cx, by-h);
+      ctx.bezierCurveTo(cx+w*0.5, by-h*0.92, cx+w, by-h*0.4, cx, by);
+      ctx.fillStyle = col; ctx.fill();
+    }
+    flame(74*sc,190*sc,'#c4421f'); flame(50*sc,148*sc,'#e8763c');
+    flame(31*sc,100*sc,'#F4A93D'); flame(16*sc,58*sc,'#FBD46A');
+    ctx.fillStyle = '#5a3a24';
+    ctx.save(); ctx.translate(cx, by+8); ctx.rotate(-0.28); ctx.fillRect(-74*sc,-9*sc,148*sc,18*sc); ctx.restore();
+    ctx.save(); ctx.translate(cx, by+8); ctx.rotate(0.28); ctx.fillRect(-74*sc,-9*sc,148*sc,18*sc); ctx.restore();
+    ctx.restore();
+  }
+  function drawCardInto(ctx, W, H){
+    var s = cardStats();
+    var g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#12203a'); g.addColorStop(.42,'#3a2a45'); g.addColorStop(.72,'#7a3b2f'); g.addColorStop(1,'#e8763c');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff6dc';
+    for(var i=0;i<44;i++){ ctx.globalAlpha = 0.15 + ((i*7)%10)/22; ctx.beginPath();
+      ctx.arc((i*151)%W, (i*97)%Math.round(H*0.42), 1.7, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    drawFlame(ctx, W/2, H*0.34, 1.0);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#7BA0AE'; ctx.font = '700 30px "Hanken Grotesk", system-ui, sans-serif';
+    spacedText(ctx, 'BILAN DE CAMP', W/2, 92, 8);
+    ctx.fillStyle = '#EFE6D3'; ctx.font = '400 94px Anton, "Hanken Grotesk", sans-serif';
+    ctx.fillText('CAMPING', W/2, 188); ctx.fillText('EN TENTE', W/2, 280);
+    ctx.fillStyle = '#F4A93D'; ctx.font = '400 132px Anton, "Hanken Grotesk", sans-serif';
+    ctx.fillText(s.pct + '%', W/2, H*0.50);
+    ctx.fillStyle = '#EFE6D3'; ctx.font = '600 34px "Hanken Grotesk", system-ui, sans-serif';
+    ctx.fillText(s.done + ' / ' + s.tot + ' items rangés', W/2, H*0.50 + 52);
+    ctx.fillStyle = '#FBD46A'; ctx.font = '800 30px "Hanken Grotesk", system-ui, sans-serif';
+    spacedText(ctx, 'RANG : ' + s.rang.toUpperCase(), W/2, H*0.50 + 112, 2);
+    var rows = [
+      ['🦝  Guimauves volées', String(s.vols)],
+      ['💫  Vœux faits à la lune', String(s.voeux)],
+      ['💨  Niveau de bines', s.bines]
+    ];
+    var y = H*0.66, lineH = 78, k;
+    for(k=0;k<rows.length;k++){
+      var ry = y + k*lineH;
+      ctx.textAlign = 'left'; ctx.fillStyle = '#EFE6D3'; ctx.font = '600 34px "Hanken Grotesk", system-ui, sans-serif';
+      ctx.fillText(rows[k][0], W*0.11, ry);
+      ctx.textAlign = 'right'; ctx.fillStyle = '#F4A93D'; ctx.font = '800 34px "Hanken Grotesk", system-ui, sans-serif';
+      ctx.fillText(rows[k][1], W*0.89, ry);
+    }
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(239,230,211,.9)'; ctx.font = 'italic 600 29px "Hanken Grotesk", system-ui, sans-serif';
+    ctx.fillText('« Bilan approuvé par Petit Bob. »', W/2, H*0.90);
+    ctx.fillStyle = 'rgba(255,246,220,.65)'; ctx.font = '600 24px "Hanken Grotesk", system-ui, sans-serif';
+    ctx.fillText('frankyray21.github.io/checklist-camping', W/2, H-64);
+  }
+  function downloadBlob(blob){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = 'bilan-camping.png';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+  }
+  async function generateCard(preview){
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    var W=1080, H=1350;
+    var cv = document.createElement('canvas'); cv.width=W; cv.height=H;
+    var ctx = cv.getContext('2d');
+    drawCardInto(ctx, W, H);
+    if(preview){ cv.id='cardPreview';
+      cv.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:90%;max-height:90%;z-index:999;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.6)';
+      document.body.appendChild(cv); return; }
+    cv.toBlob(function(blob){
+      if(!blob) return;
+      var file=null;
+      try{ file = new File([blob], 'bilan-camping.png', {type:'image/png'}); }catch(e){}
+      if(file && navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+        navigator.share({ files:[file], title:'Mon bilan de camping', text:'Mon bilan de camping 🏕️🔥' })
+          .catch(function(){ downloadBlob(blob); });
+      } else { downloadBlob(blob); }
+    }, 'image/png');
+  }
+
+  // --- Tracteur & machinerie lourde (l'obsession) ---
+  var MACHINES = [
+    { nom:'tracteur', svg:
+      '<svg viewBox="0 0 94 60" xmlns="http://www.w3.org/2000/svg">' +
+      '<circle cx="70" cy="44" r="15" fill="#2a2d31"/><circle cx="70" cy="44" r="7" fill="#e8b13c"/><circle cx="70" cy="44" r="2.5" fill="#3a3d42"/>' +
+      '<circle cx="24" cy="48" r="9" fill="#2a2d31"/><circle cx="24" cy="48" r="4" fill="#e8b13c"/>' +
+      '<path d="M30 34 L44 34 L48 20 L60 20 L64 34 L84 34 L84 46 L30 46 Z" fill="#3a7d34"/>' +
+      '<rect x="47" y="15" width="16" height="17" rx="2" fill="#2f6b2b"/><rect x="49" y="17" width="12" height="9" rx="1" fill="#bfe0c9"/>' +
+      '<rect x="18" y="34" width="20" height="10" rx="2" fill="#3a7d34"/>' +
+      '<rect x="40" y="9" width="4" height="15" rx="1" fill="#2a2d31"/>' +
+      '<circle cx="20" cy="38" r="2.2" fill="#fce9a8"/></svg>' },
+    { nom:'pelle mécanique', svg:
+      '<svg viewBox="0 0 104 64" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect x="34" y="48" width="60" height="14" rx="7" fill="#2a2d31"/>' +
+      '<circle cx="42" cy="55" r="4" fill="#4a4d52"/><circle cx="86" cy="55" r="4" fill="#4a4d52"/>' +
+      '<rect x="50" y="26" width="42" height="24" rx="4" fill="#e8b13c"/>' +
+      '<rect x="74" y="15" width="16" height="17" rx="2" fill="#d99a2e"/><rect x="76" y="17" width="12" height="9" rx="1" fill="#bfe0c9"/>' +
+      '<path d="M54 34 L30 22 L22 30 L44 42 Z" fill="#e8b13c" stroke="#c9922e" stroke-width="1.5"/>' +
+      '<path d="M24 27 L10 33 L15 45 L28 40 Z" fill="#c98a24"/></svg>' },
+    { nom:'bulldozer', svg:
+      '<svg viewBox="0 0 100 62" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect x="30" y="44" width="54" height="14" rx="7" fill="#2a2d31"/>' +
+      '<circle cx="38" cy="51" r="4" fill="#4a4d52"/><circle cx="76" cy="51" r="4" fill="#4a4d52"/>' +
+      '<rect x="44" y="26" width="36" height="20" rx="3" fill="#e8763c"/>' +
+      '<rect x="60" y="15" width="16" height="15" rx="2" fill="#c4421f"/><rect x="62" y="17" width="11" height="8" rx="1" fill="#bfe0c9"/>' +
+      '<path d="M24 30 L24 56 L18 56 L18 30 Z" fill="#b0b3b8"/><path d="M24 40 L40 36 L40 42 L24 46 Z" fill="#8a8d92"/></svg>' },
+    { nom:'camion benne', svg:
+      '<svg viewBox="0 0 110 62" xmlns="http://www.w3.org/2000/svg">' +
+      '<circle cx="32" cy="50" r="9" fill="#2a2d31"/><circle cx="32" cy="50" r="4" fill="#7a7d82"/>' +
+      '<circle cx="82" cy="50" r="9" fill="#2a2d31"/><circle cx="82" cy="50" r="4" fill="#7a7d82"/>' +
+      '<path d="M14 44 L14 30 L34 30 L40 22 L52 22 L52 44 Z" fill="#c4421f"/>' +
+      '<rect x="40" y="26" width="10" height="9" rx="1" fill="#bfe0c9"/>' +
+      '<path d="M54 44 L54 24 L100 24 L94 44 Z" fill="#e8b13c"/></svg>' }
+  ];
+  function machineBob(nom){
+    var L = [
+      'un ' + nom + ' traverse le camping. Petit Bob est aux oiseaux.',
+      'de la belle machinerie ! Petit Bob a tout arrêté pour regarder passer le ' + nom + '.',
+      'le ' + nom + ' fait sa ronde. Vroum vroum.',
+      'Petit Bob salue le ' + nom + '. Le ' + nom + ' klaxonne. TUUT TUUT !',
+      'le ' + nom + ' est game. Petit Bob veut le même pour Noël.'
+    ];
+    return L[Math.floor(Math.random()*L.length)];
+  }
+  var machineBusy = false;
+  function machineGag(){
+    if(!motionOK || machineBusy) return;
+    var f = document.getElementById('feu');
+    if(!f) return;
+    machineBusy = true;
+    var m = MACHINES[Math.floor(Math.random()*MACHINES.length)];
+    var el2 = document.createElement('div');
+    el2.className = 'machine';
+    el2.innerHTML = m.svg;
+    f.appendChild(el2);
+    bobSay(machineBob(m.nom));
+    var puffs = setInterval(function(){
+      var s = document.createElement('span');
+      s.className = 'fumee';
+      s.style.left = (34 + Math.random()*12) + '%';
+      el2.appendChild(s);
+      s.addEventListener('animationend', function(){ if(s.parentNode) s.parentNode.removeChild(s); });
+    }, 280);
+    el2.addEventListener('animationend', function(){
+      clearInterval(puffs);
+      if(el2.parentNode) el2.parentNode.removeChild(el2);
+      machineBusy = false;
+    });
+  }
+  var machineTimer = null;
+  function startMachineWatch(){
+    if(!motionOK || machineTimer) return;
+    machineTimer = setInterval(function(){
+      if(!machineBusy && curFire >= 0.2 && Math.random() < 0.14) machineGag();
+    }, 16000);
+  }
+
   // Répliques spéciales quand le raton frappe
   var RATON_BOB = [
     'un raton laveur vient de voler une guimauve. Petit Bob applaudit le crime.',
@@ -1288,7 +1494,7 @@
     inp.addEventListener('change', function(){
       state.checked[it.id] = inp.checked;
       if(!inp.checked) delete state.checked[it.id];
-      save(); refresh();
+      save(); refresh(); showBob();   // Petit Bob change quand TU coches
       // coche fantôme: si on spamme le même item, Petit Bob s'impatiente
       if(spamId === it.id){ spamN++; } else { spamId = it.id; spamN = 1; }
       clearTimeout(spamT);
@@ -1297,13 +1503,33 @@
     });
     var box = el('span','box', CHECK);
     var txt = el('span','txt');
-    txt.appendChild(el('span','nm', it.nm));
+    var nm = itemName(it);
+    txt.appendChild(el('span','nm', nm));
     if(it.nt) txt.appendChild(el('span','nt', it.nt));
     row.appendChild(inp); row.appendChild(box); row.appendChild(txt);
 
+    // Modifier le texte de l'item (d\u00E9j\u00E0 l\u00E0 ou personnalis\u00E9)
+    var edit = el('button','edit','\u270E');
+    edit.type='button';
+    edit.setAttribute('aria-label','Modifier '+nm);
+    edit.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      var v = window.prompt('Modifier l\u2019item :', itemName(it));
+      if(v === null) return;
+      v = v.trim(); if(!v) return;
+      if(isCustom){
+        var arr = state.custom[cat.id] || [];
+        for(var i=0;i<arr.length;i++){ if(arr[i].id === it.id){ arr[i].nm = v; break; } }
+      } else {
+        if(v === it.nm){ delete state.edits[it.id]; } else { state.edits[it.id] = v; }
+      }
+      save(); render();
+    });
+    row.appendChild(edit);
+
     var del = el('button','del','\u00D7');
     del.type='button';
-    del.setAttribute('aria-label','Enlever '+it.nm);
+    del.setAttribute('aria-label','Enlever '+nm);
     del.addEventListener('click', function(ev){
       ev.preventDefault(); ev.stopPropagation();
       if(isCustom){
@@ -1393,7 +1619,7 @@
         var on = !!state.checked[it.id];
         html += '<div class="pd-row">'
           + '<span class="pd-box' + (on ? ' on' : '') + '">' + (on ? CHECKP : '') + '</span>'
-          + '<span class="pd-txt"><span class="pd-nm">' + esc(it.nm) + '</span>'
+          + '<span class="pd-txt"><span class="pd-nm">' + esc(itemName(it)) + '</span>'
           + (it.nt ? ' <span class="pd-note">· ' + esc(it.nt) + '</span>' : '')
           + '</span></div>';
       });
@@ -1489,7 +1715,7 @@
       y-=12;
       allItems(cat).forEach(function(it){
         var on=!!state.checked[it.id];
-        var nm=it.nm, note=it.nt||'';
+        var nm=itemName(it), note=it.nt||'';
         var sep='   ·   ';
         var sameW = tw(nm,10) + (note? tw(sep+note,9) : 0);
         var wrap = note && (16 + sameW > CW);
@@ -1615,6 +1841,11 @@
       pied.innerHTML=''; pied.appendChild(c);
     });
     pied.appendChild(pdf);
+
+    var carte = el('button','install', '🎁 Ma carte de camp');
+    carte.type='button';
+    carte.addEventListener('click', function(){ generateCard(false); });
+    pied.appendChild(carte);
 
     var inst = makeInstallControl();
     if(inst) pied.appendChild(inst);
@@ -1937,12 +2168,7 @@
     if(bm) bm.textContent = bobMot();
     var bobBtn = document.getElementById('bob');
     if(bobBtn) bobBtn.addEventListener('click', showBob);
-    // rotation douce, seulement si le mouvement est toléré
-    try{
-      if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: no-preference)').matches){
-        setInterval(showBob, 30000);
-      }
-    }catch(e){}
+    // Petit Bob ne tourne plus tout seul: il change seulement quand tu tapes dessus ou tu coches.
 
     // Ciel de soir: on sème les étoiles et on guette les filantes
     makeStars();
@@ -1954,6 +2180,7 @@
     startRaccoonWatch();
     startSkunkWatch();
     startSausageWatch();
+    startMachineWatch();
 
     // Poutine d'urgence: tape le titre 5 fois vite, ou le code Konami
     var titleTaps = 0, titleT = null;
@@ -1978,6 +2205,8 @@
     if(cr) cr.addEventListener('click', function(){ raccoonHeist(true); });
     var cm = document.getElementById('callMouf');
     if(cm) cm.addEventListener('click', function(){ skunkRaid(); });
+    var cmac = document.getElementById('callMachine');
+    if(cmac) cmac.addEventListener('click', function(){ machineGag(); });
 
     // PWA: enregistrement du service worker pour le mode hors-ligne
     if('serviceWorker' in navigator){
