@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.2.0 — 2026-07-01
+
+### Ajouté
+- **🔗 Partager la liste (2 appareils)** : un bouton « Partager la liste » génère un lien qui contient toute la liste (items cochés, items ajoutés, retirés, renommés). Ta conjointe ouvre le lien sur son appareil et récupère exactement la même liste (avec confirmation avant de remplacer la sienne). Utilise le partage natif du téléphone, avec copie du lien en repli. Sans réglage ni compte.
+
 ## v2.1.0 — 2026-07-01
 
 ### Ajouté

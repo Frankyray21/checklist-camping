@@ -925,7 +925,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.1.0';
+  var VERSION = 'v2.2.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{} };
 
@@ -1412,6 +1412,44 @@
     }, 16000);
   }
 
+  // --- Partage de la liste par lien (2 appareils) ---
+  function b64enc(str){ return btoa(unescape(encodeURIComponent(str))); }
+  function b64dec(str){ return decodeURIComponent(escape(atob(str))); }
+  function copyLink(link){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(link)
+        .then(function(){ showBadge('🔗 Lien copié ! Envoie-le à ta partenaire.'); })
+        .catch(function(){ window.prompt('Copie ce lien :', link); });
+    } else { window.prompt('Copie ce lien :', link); }
+  }
+  function shareLink(){
+    var subset = { checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits };
+    var enc;
+    try{ enc = b64enc(JSON.stringify(subset)); }catch(e){ return; }
+    var link = location.origin + location.pathname + '#l=' + enc;
+    if(navigator.share){
+      navigator.share({ title:'Notre liste de camping', text:'Notre liste de camping 🏕️🔥', url:link })
+        .catch(function(){ copyLink(link); });
+    } else { copyLink(link); }
+  }
+  function applySharedIfAny(){
+    var h = location.hash || '';
+    var m = h.match(/[#&]l=([^&]+)/);
+    if(!m) return;
+    var data = null;
+    try{ data = JSON.parse(b64dec(m[1])); }catch(e){ data = null; }
+    try{ history.replaceState(null, '', location.pathname); }catch(e){}
+    if(!data) return;
+    var ok = window.confirm('Charger la liste de camping partagée ? Ça remplace ta liste actuelle sur cet appareil.');
+    if(!ok) return;
+    if(data.checked) state.checked = data.checked;
+    if(data.custom) state.custom = data.custom;
+    if(data.removed) state.removed = data.removed;
+    if(data.edits) state.edits = data.edits;
+    save(); render();
+    showBadge('🏕️ Liste partagée chargée !');
+  }
+
   // Répliques spéciales quand le raton frappe
   var RATON_BOB = [
     'un raton laveur vient de voler une guimauve. Petit Bob applaudit le crime.',
@@ -1847,6 +1885,11 @@
     carte.addEventListener('click', function(){ generateCard(false); });
     pied.appendChild(carte);
 
+    var partage = el('button','install', '🔗 Partager la liste');
+    partage.type='button';
+    partage.addEventListener('click', shareLink);
+    pied.appendChild(partage);
+
     var inst = makeInstallControl();
     if(inst) pied.appendChild(inst);
 
@@ -2159,6 +2202,7 @@
     if(v) v.textContent = VERSION;
     await load();
     render();
+    applySharedIfAny();   // si on ouvre un lien de liste partagée
 
     // Compteur de vols de guimauves
     updateVols();
