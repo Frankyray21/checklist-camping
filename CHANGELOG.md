@@ -3,6 +3,16 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.5.0 — 2026-07-01
+
+### Ajouté
+- **Déclencheurs manuels** : deux boutons sous le feu, « Appeler le raton » 🦝 et « Appeler la moufette » 🦨, pour les faire apparaître sur commande (pratique pour les montrer). L'appel manuel du raton force la guimauve à apparaître le temps du vol.
+
+### Amélioré
+- Les bibittes **trottinent** maintenant (petit dandinement de haut en bas) au lieu de glisser.
+- **Poussière** soulevée à l'entrée du raton, quand il repart, et surtout quand il **déguerpit** à cause de la moufette.
+- La moufette lâche des **bouffées vertes** qui montent en plus de son nuage, pour un « PSCHITT » plus vivant.
+
 ## v1.4.1 — 2026-07-01
 
 ### Modifié

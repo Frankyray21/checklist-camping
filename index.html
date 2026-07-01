@@ -236,6 +236,32 @@
   }
   @keyframes minipop{0%{transform:scale(1);} 32%{transform:scale(1.4) translateY(-1px);} 100%{transform:scale(1);}}
 
+  /* Boutons pour appeler les bibittes sur commande */
+  .zoo{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:12px 0 0;}
+  .zoobtn{border:1.5px solid rgba(239,230,211,.22); background:rgba(239,230,211,.05); color:var(--cendre);
+    border-radius:99px; padding:8px 15px; cursor:pointer; font-family:inherit; font-weight:700; font-size:13.5px;
+    display:inline-flex; align-items:center; gap:6px; transition:border-color .15s ease, color .15s ease, background .15s ease, transform .08s ease;}
+  .zoobtn:hover{border-color:var(--braise); color:var(--flamme); background:rgba(232,118,60,.08);}
+  .zoobtn:active{transform:scale(.96);}
+  .zoobtn:focus-visible{outline:3px solid var(--ciel); outline-offset:2px;}
+  .zoobtn:disabled{opacity:.45; cursor:default; border-color:rgba(239,230,211,.14);}
+
+  /* Bibittes qui trottinent + poussière + bouffées de puanteur */
+  .gui.show{opacity:1 !important;}
+  .dust{position:absolute; bottom:15px; width:11px; height:11px; border-radius:50%; z-index:5;
+    background:radial-gradient(circle, rgba(180,170,150,.5), transparent 70%); opacity:0; pointer-events:none;
+    animation:dust .6s ease-out forwards;}
+  .stinkbit{position:absolute; width:11px; height:11px; border-radius:50%; z-index:6;
+    background:radial-gradient(circle, rgba(172,222,92,.85), transparent 70%); opacity:0; pointer-events:none;
+    animation:stinkbit 1.9s ease-out forwards;}
+  @media (prefers-reduced-motion: no-preference){
+    .raton svg, .mouf svg{transform-origin:bottom center; animation:waddle .3s ease-in-out infinite;}
+    .mouf svg{animation-duration:.34s;}
+  }
+  @keyframes waddle{0%,100%{transform:translateY(0) rotate(-2.5deg);} 50%{transform:translateY(-2px) rotate(2.5deg);}}
+  @keyframes dust{0%{opacity:.6; transform:translateY(0) scale(.5);} 100%{opacity:0; transform:translateY(-11px) scale(1.7);}}
+  @keyframes stinkbit{0%{opacity:0; transform:translate(0,0) scale(.6);} 20%{opacity:.9;} 100%{opacity:0; transform:translate(var(--dx,-22px),-42px) scale(1.5);}}
+
   .compte b{display:inline-block;}
   .bump{animation:bump .45s cubic-bezier(.34,1.56,.64,1);}
 
@@ -476,6 +502,11 @@
 
       <p class="etat" id="etat">Le feu est pas encore pogné</p>
       <p class="compte"><b id="nFait">0</b> <small>/ <span id="nTotal">0</span> items rangés</small></p>
+
+      <div class="zoo">
+        <button class="zoobtn" id="callRaton" type="button">🦝 Appeler le raton</button>
+        <button class="zoobtn" id="callMouf" type="button">🦨 Appeler la moufette</button>
+      </div>
 
       <button class="bob" id="bob" type="button" title="Tape pour une autre niaiserie de Petit Bob">
         <span class="bobpip" aria-hidden="true"></span>
@@ -740,7 +771,7 @@
     ]}
   ];
 
-  var VERSION = 'v1.4.1';
+  var VERSION = 'v1.5.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{} };
 
@@ -1364,26 +1395,43 @@
     prevDone = done;
   }
 
+  // petite bouffée de poussière (quand ça trottine ou déguerpit)
+  function puffDust(n, leftPct){
+    if(!motionOK) return;
+    var f = document.getElementById('feu');
+    if(!f) return;
+    for(var i=0;i<n;i++){
+      var d = document.createElement('span');
+      d.className = 'dust';
+      d.style.left = ((leftPct || 60) + (Math.random()*16 - 8)) + '%';
+      d.style.animationDelay = (Math.random()*0.12).toFixed(2)+'s';
+      f.appendChild(d);
+      d.addEventListener('animationend', function(){ if(this.parentNode) this.parentNode.removeChild(this); });
+    }
+  }
+
   // Le raton laveur débarque, pique la guimauve, pis décrisse
-  function raccoonHeist(){
+  function raccoonHeist(manual){
     if(!motionOK || raccoonBusy) return;
     var f = document.getElementById('feu');
     var gui = f && f.querySelector('.gui');
     if(!f || !gui) return;
     raccoonBusy = true;
+    if(manual) gui.classList.add('show');   // sur appel manuel: on montre la guimauve à voler
 
     var r = document.createElement('div');
     r.className = 'raton';
     r.innerHTML = RATON_SVG;
     f.appendChild(r);
+    puffDust(2, 88);                         // poussière à l'entrée (à droite)
 
     // au moment où il atteint la guimauve: il la pique
     var grab = setTimeout(function(){
       gui.classList.add('vole');       // la guimauve disparaît du bâton
       r.classList.add('plein');        // le raton la tient
       bobSay(ratonBob());              // Petit Bob commente le vol
-      // quelques miettes d'étincelles au passage
-      spawnBurst(4);
+      spawnBurst(4);                   // quelques miettes d'étincelles
+      puffDust(2, 60);                 // poussière quand il repart
     }, 1550);
     r._grab = grab;
 
@@ -1391,6 +1439,7 @@
       clearTimeout(grab);
       if(r.parentNode) r.parentNode.removeChild(r);
       gui.classList.remove('vole');    // la guimauve repousse (merci le feu)
+      gui.classList.remove('show');
       raccoonBusy = false;
     });
   }
@@ -1417,10 +1466,11 @@
       r.style.transform = 'translateX(-360px)';
       r.style.opacity = '0';
     });
+    puffDust(3, 45);                          // nuage de poussière: il déguerpit
     var gui = f.querySelector('.gui');
     var done = function(){
       if(r.parentNode) r.parentNode.removeChild(r);
-      if(gui) gui.classList.remove('vole');   // la guimauve repousse
+      if(gui){ gui.classList.remove('vole'); gui.classList.remove('show'); }  // la guimauve repousse
       raccoonBusy = false;
     };
     r.addEventListener('transitionend', done);
@@ -1445,6 +1495,17 @@
       stink.className = 'stink';
       f.appendChild(stink);
       stink.addEventListener('animationend', function(){ if(this.parentNode) this.parentNode.removeChild(this); });
+      // quelques bouffées vertes qui montent
+      for(var i=0;i<4;i++){
+        var b = document.createElement('span');
+        b.className = 'stinkbit';
+        b.style.right = (8 + Math.random()*26) + 'px';
+        b.style.bottom = (28 + Math.random()*14) + 'px';
+        b.style.setProperty('--dx', (-(10+Math.random()*30)).toFixed(0)+'px');
+        b.style.animationDelay = (Math.random()*0.35).toFixed(2)+'s';
+        f.appendChild(b);
+        b.addEventListener('animationend', function(){ if(this.parentNode) this.parentNode.removeChild(this); });
+      }
       raccoonFlee();                                  // le raton sacre son camp
       bobSay(moufBob());                              // Petit Bob commente de loin
       pulse('recu', 220); pulse('sputter', 460);      // même le feu recule
@@ -1518,6 +1579,12 @@
     // Le raton laveur guette la guimauve, la moufette guette tout le monde
     startRaccoonWatch();
     startSkunkWatch();
+
+    // Déclencheurs manuels: on les appelle sur commande
+    var cr = document.getElementById('callRaton');
+    if(cr) cr.addEventListener('click', function(){ raccoonHeist(true); });
+    var cm = document.getElementById('callMouf');
+    if(cm) cm.addEventListener('click', function(){ skunkRaid(); });
 
     // PWA: enregistrement du service worker pour le mode hors-ligne
     if('serviceWorker' in navigator){
