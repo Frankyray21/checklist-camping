@@ -70,12 +70,29 @@
   @media (prefers-reduced-motion: no-preference){ .star{animation:twinkle 3s ease-in-out infinite;} }
   @keyframes twinkle{0%,100%{opacity:var(--o,.85);} 50%{opacity:calc(var(--o,.85) * .25);}}
 
-  /* Lune qui se lève vers la fin */
-  .moon{position:fixed; top:62px; right:30px; width:34px; height:34px; border-radius:50%;
-    z-index:-1; pointer-events:none; opacity:0; transition:opacity 1.2s ease, transform 1.2s ease;
-    transform:translateY(8px); background:transparent;
+  /* Lune qui se lève vers la fin (tape dessus pour un vœu) */
+  .moon{position:fixed; top:62px; right:30px; width:34px; height:34px; border:0; padding:0; border-radius:50%;
+    z-index:40; pointer-events:none; opacity:0; transition:opacity 1.2s ease, transform 1.2s ease;
+    transform:translateY(8px); background:transparent; -webkit-appearance:none; appearance:none;
     box-shadow: inset -9px -5px 0 0 #f4edcf, 0 0 16px rgba(251,212,106,.28);}
-  .moon.up{transform:translateY(0);}
+  .moon:focus-visible{outline:3px solid var(--ciel); outline-offset:3px;}
+  .moon.up{transform:translateY(0); pointer-events:auto; cursor:pointer;}
+  .moon.up:hover{box-shadow: inset -9px -5px 0 0 #fff6dd, 0 0 22px rgba(251,212,106,.5);}
+  .moon.up:active{transform:scale(.92);}
+
+  /* Aurores boréales, en récompense proche de 100% */
+  .aurora{position:fixed; left:-20%; right:-20%; top:0; height:46%; z-index:-1; pointer-events:none;
+    opacity:0; transition:opacity 1.5s ease; filter:blur(13px); mix-blend-mode:screen;
+    background:
+      radial-gradient(58% 135% at 26% 0%, rgba(96,230,168,.46), transparent 62%),
+      radial-gradient(52% 145% at 58% 0%, rgba(122,176,244,.34), transparent 62%),
+      radial-gradient(48% 135% at 85% 0%, rgba(158,244,196,.36), transparent 64%);}
+  @media (prefers-reduced-motion: no-preference){ .aurora{animation:aurora 9s ease-in-out infinite alternate;} }
+  @keyframes aurora{0%{transform:translateX(-4%) skewX(-7deg) scaleY(1);} 100%{transform:translateX(4%) skewX(7deg) scaleY(1.14);}}
+
+  /* Constellation cachée: une petite tente dans les étoiles */
+  .constel{position:fixed; top:15%; left:7%; width:66px; height:58px; z-index:-1; pointer-events:none;
+    opacity:0; transition:opacity 1.2s ease;}
 
   /* Étoiles filantes (nuit profonde) */
   .shoot{position:fixed; z-index:-1; pointer-events:none; width:2px; height:2px; border-radius:50%;
@@ -145,7 +162,8 @@
     background:radial-gradient(circle at 50% 120%, rgba(244,169,61,calc(.7*var(--fire))), transparent 60%);}
 
   .flammes{position:absolute; left:50%; bottom:20px; transform:translateX(-50%); width:90px; height:120px;
-    transform-origin:bottom center; mix-blend-mode:screen;}
+    transform-origin:bottom center; mix-blend-mode:screen;
+    filter:saturate(calc(1 + .18*var(--fire))) hue-rotate(calc(-11deg * var(--fire)));}  /* reflet rosé au coucher */
   .flamme{position:absolute; left:50%; bottom:0; transform:translateX(-50%);
     border-radius:50% 50% 50% 50% / 62% 62% 38% 38%; filter:blur(2px); transform-origin:bottom center;}
   .f1{width:calc(56px*(.45 + .55*var(--fire))); height:calc(112px*(.28 + .72*var(--fire)));
@@ -519,8 +537,19 @@
 <body>
 
   <div class="sky" id="sky" aria-hidden="true"></div>
+  <div class="aurora" id="aurora" aria-hidden="true"></div>
   <div class="stars" id="stars" aria-hidden="true"></div>
-  <div class="moon" id="moon" aria-hidden="true"></div>
+  <svg class="constel" id="constel" viewBox="0 0 80 70" aria-hidden="true">
+    <g stroke="rgba(255,246,220,.35)" stroke-width="1" fill="none">
+      <path d="M40 8 L14 58 L66 58 L40 8 Z"/>
+      <path d="M40 8 L40 58"/>
+    </g>
+    <g fill="#fff6dc">
+      <circle cx="40" cy="8" r="1.9"/><circle cx="14" cy="58" r="1.9"/><circle cx="66" cy="58" r="1.9"/>
+      <circle cx="40" cy="58" r="1.6"/><circle cx="27" cy="33" r="1.4"/><circle cx="53" cy="33" r="1.4"/>
+    </g>
+  </svg>
+  <button class="moon" id="moon" type="button" title="Fais un vœu" aria-label="Fais un vœu"></button>
 
   <div class="rail">
     <span class="minifeu" id="minifeu" aria-hidden="true"><i class="minipip"></i><i class="mflame mf1"></i><i class="mflame mf2"></i></span>
@@ -821,7 +850,7 @@
     ]}
   ];
 
-  var VERSION = 'v1.8.0';
+  var VERSION = 'v1.9.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0 };
 
@@ -974,6 +1003,25 @@
     nightTimer = setInterval(function(){
       if(curFire >= 0.6 && Math.random() < 0.33) shootingStar();
     }, 8000);
+  }
+
+  // Fais un vœu (tape la lune): une filante file, Petit Bob l'exauce à sa façon
+  var WISH_BOB = [
+    'ton vœu est exaucé : le raton te doit maintenant une guimauve. Bonne chance pour la récupérer.',
+    'Petit Bob a transmis ton vœu à l’univers. L’univers a lu, pis a pas répondu.',
+    'vœu accordé : il fera beau… quelque part, c’est garanti.',
+    'ton vœu s’en vient. Petit Bob l’a mis sur la glace, avec le lait.',
+    'Petit Bob a fait un vœu lui aussi : que la moufette prenne des vacances.',
+    'vœu exaucé à 87 %. Le reste dépend des maringouins.',
+    'ton vœu a été approuvé par le comité. Le comité, c’est juste Petit Bob.'
+  ];
+  var wishLast = -1;
+  function makeWish(){
+    shootingStar();                               // une étoile file (si le mouvement est permis)
+    var i = wishLast;
+    while(i === wishLast && WISH_BOB.length > 1){ i = Math.floor(Math.random()*WISH_BOB.length); }
+    wishLast = i;
+    bobSay(WISH_BOB[i]);
   }
 
   // Répliques spéciales quand le raton frappe
@@ -1643,6 +1691,10 @@
     var moon = document.getElementById('moon');
     if(moon){ moon.style.opacity = Math.max(0, Math.min(1, (p - 0.6) / 0.4)).toFixed(3);     // la lune se lève après ~60%
       moon.classList.toggle('up', p >= 0.6); }
+    var constel = document.getElementById('constel');
+    if(constel) constel.style.opacity = (Math.max(0, Math.min(1, (p - 0.5) / 0.4)) * 0.85).toFixed(3);  // constellation dès ~50%
+    var aurora = document.getElementById('aurora');
+    if(aurora) aurora.style.opacity = Math.max(0, Math.min(1, (p - 0.85) / 0.15)).toFixed(3);           // aurores proche de 100%
     document.getElementById('nFait').textContent = t.done;
     document.getElementById('nTotal').textContent = t.tot;
     document.getElementById('etat').textContent = etatTexte(p);
@@ -1688,6 +1740,8 @@
     // Ciel de soir: on sème les étoiles et on guette les filantes
     makeStars();
     startNightWatch();
+    var moonEl = document.getElementById('moon');
+    if(moonEl) moonEl.addEventListener('click', makeWish);
 
     // Le raton laveur guette la guimauve, la moufette guette tout le monde
     startRaccoonWatch();

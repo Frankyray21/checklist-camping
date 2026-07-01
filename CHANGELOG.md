@@ -3,6 +3,14 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.9.0 — 2026-07-01
+
+### Ajouté
+- **💫 Fais un vœu** : une fois la lune levée (~60 %), tape dessus — une étoile file et Petit Bob exauce ton vœu à sa façon absurde.
+- **🌌 Aurores boréales** : de subtiles aurores vertes ondulent tout en haut du ciel quand tu approches de 100 %.
+- **🔭 Constellation cachée** : quelques étoiles reliées forment une petite tente dans le ciel (apparaît dès ~50 %).
+- **🌙 Reflet rosé sur les flammes** : le feu prend une teinte un peu plus rosée à mesure que le coucher de soleil s'installe.
+
 ## v1.8.0 — 2026-07-01
 
 ### Ajouté
