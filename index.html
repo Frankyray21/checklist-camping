@@ -167,6 +167,27 @@
     background:radial-gradient(circle,var(--or),var(--braise) 70%); opacity:0; pointer-events:none;
     box-shadow:0 0 7px rgba(232,118,60,.8); animation:ember 1.7s ease-in forwards;}
 
+  /* Raton laveur voleur de guimauve */
+  .raton{position:absolute; right:6px; bottom:20px; width:60px; height:50px;
+    opacity:0; pointer-events:none; z-index:6; transform:translateX(170px);
+    animation:heist 4s ease-in-out forwards;
+    filter:drop-shadow(0 0 2px rgba(239,230,211,.55)) drop-shadow(0 3px 5px rgba(0,0,0,.5));}
+  .raton svg{width:100%; height:100%; display:block;}
+  .raton .loot{position:absolute; left:1px; bottom:4px; width:12px; height:14px; border-radius:5px;
+    background:radial-gradient(circle at 50% 32%, #fff8ee, #efdcc0 70%, #e6c49a);
+    box-shadow:0 0 7px rgba(244,169,61,.85); opacity:0; transform:scale(.4);
+    transition:opacity .15s ease, transform .15s ease;}
+  .raton.plein .loot{opacity:1; transform:scale(1);}
+  .gui.vole .mallow{opacity:0; transition:opacity .12s ease;}
+  @keyframes heist{
+    0%{transform:translateX(160px) translateY(2px); opacity:0;}
+    8%{opacity:1;}
+    30%{transform:translateX(4px) translateY(0);}
+    38%{transform:translateX(-3px) translateY(-4px);}
+    46%{transform:translateX(0) translateY(0);}
+    100%{transform:translateX(-310px) translateY(3px); opacity:0;}
+  }
+
   .compte b{display:inline-block;}
   .bump{animation:bump .45s cubic-bezier(.34,1.56,.64,1);}
 
@@ -671,7 +692,7 @@
     ]}
   ];
 
-  var VERSION = 'v1.2.0';
+  var VERSION = 'v1.3.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{} };
 
@@ -771,12 +792,48 @@
     bobLast = i;
     return BOB[i];
   }
-  function showBob(){
+  function bobSay(txt){
     var m = document.getElementById('bobmot');
     if(!m) return;
     m.style.opacity = '0';
-    setTimeout(function(){ m.textContent = bobMot(); m.style.opacity = '1'; }, 180);
+    setTimeout(function(){ m.textContent = txt; m.style.opacity = '1'; }, 180);
   }
+  function showBob(){ bobSay(bobMot()); }
+
+  // Répliques spéciales quand le raton frappe
+  var RATON_BOB = [
+    'un raton laveur vient de voler une guimauve. Petit Bob applaudit le crime.',
+    'le même raton que l’an passé est reparti avec la guimauve. Il a un casier.',
+    'un raton a piqué la guimauve pis salué la foule. Petit Bob le nomme employé du mois.',
+    'le raton laveur court plus vite avec une guimauve. La science le confirme.',
+    'Petit Bob a essayé de négocier avec le raton. Le raton a gardé la guimauve.',
+    'un raton masqué a frappé encore. Petit Bob dit qu’il « travaille avec panache ».'
+  ];
+  function ratonBob(){ return RATON_BOB[Math.floor(Math.random()*RATON_BOB.length)]; }
+
+  // Le raton laveur (SVG, tourné vers la gauche)
+  var RATON_SVG =
+    '<svg viewBox="0 0 48 42" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M34 28 C 45 27, 47 15, 42 8 C 41 15, 37 19, 32 21 Z" fill="#6f747b"/>' +
+    '<path d="M40.4 10 C 42 13, 42 16, 40.4 18.5 C 39.4 16, 39.4 13, 40.4 10 Z" fill="#2f3236"/>' +
+    '<path d="M35 18 C 37 19, 39 20, 40.5 22 C 38.5 22, 36.5 21, 34.5 19.5 Z" fill="#2f3236"/>' +
+    '<ellipse cx="24" cy="26" rx="12" ry="9" fill="#8a8f96"/>' +
+    '<ellipse cx="28" cy="34" rx="3.2" ry="2.4" fill="#3a3d42"/>' +
+    '<circle cx="14" cy="20" r="10" fill="#9aa0a7"/>' +
+    '<circle cx="8" cy="11.5" r="3.6" fill="#8a8f96"/>' +
+    '<circle cx="18" cy="10.5" r="3.6" fill="#8a8f96"/>' +
+    '<circle cx="8" cy="11.8" r="1.8" fill="#5b5f65"/>' +
+    '<circle cx="18" cy="10.8" r="1.8" fill="#5b5f65"/>' +
+    '<path d="M14 18 L 1 22 L 14 26 Z" fill="#e7e2d6"/>' +
+    '<circle cx="2.8" cy="22" r="1.8" fill="#23262a"/>' +
+    '<path d="M6 17 C 10 14, 18 14, 22 17 C 21 21, 18 23, 14 23 C 10 23, 7 21, 6 17 Z" fill="#2b2e33"/>' +
+    '<circle cx="10.5" cy="18" r="2.4" fill="#f3efe4"/>' +
+    '<circle cx="17.5" cy="17.5" r="2.4" fill="#f3efe4"/>' +
+    '<circle cx="10.8" cy="18.2" r="1.1" fill="#1c1f22"/>' +
+    '<circle cx="17.8" cy="17.7" r="1.1" fill="#1c1f22"/>' +
+    '<ellipse cx="10" cy="32" rx="3" ry="2.3" fill="#3a3d42"/>' +
+    '</svg>' +
+    '<span class="loot"></span>';
 
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
@@ -1148,6 +1205,9 @@
   try{ motionOK = !window.matchMedia || window.matchMedia('(prefers-reduced-motion: no-preference)').matches; }catch(e){ motionOK = true; }
   var prevDone = null;
   var feteTimer = null;
+  var curFire = 0;
+  var raccoonBusy = false;
+  var raccoonTimer = null;
 
   function pulse(cls, ms){
     if(!motionOK) return;
@@ -1221,9 +1281,48 @@
     prevDone = done;
   }
 
+  // Le raton laveur débarque, pique la guimauve, pis décrisse
+  function raccoonHeist(){
+    if(!motionOK || raccoonBusy) return;
+    var f = document.getElementById('feu');
+    var gui = f && f.querySelector('.gui');
+    if(!f || !gui) return;
+    raccoonBusy = true;
+
+    var r = document.createElement('div');
+    r.className = 'raton';
+    r.innerHTML = RATON_SVG;
+    f.appendChild(r);
+
+    // au moment où il atteint la guimauve: il la pique
+    var grab = setTimeout(function(){
+      gui.classList.add('vole');       // la guimauve disparaît du bâton
+      r.classList.add('plein');        // le raton la tient
+      bobSay(ratonBob());              // Petit Bob commente le vol
+      // quelques miettes d'étincelles au passage
+      spawnBurst(4);
+    }, 1550);
+
+    r.addEventListener('animationend', function(){
+      clearTimeout(grab);
+      if(r.parentNode) r.parentNode.removeChild(r);
+      gui.classList.remove('vole');    // la guimauve repousse (merci le feu)
+      raccoonBusy = false;
+    });
+  }
+
+  function startRaccoonWatch(){
+    if(!motionOK || raccoonTimer) return;
+    // de temps en temps, s'il y a une guimauve à voler, le raton tente sa chance
+    raccoonTimer = setInterval(function(){
+      if(!raccoonBusy && curFire >= 0.45 && Math.random() < 0.3) raccoonHeist();
+    }, 11000);
+  }
+
   function refresh(){
     var t = totals();
     var p = t.tot ? t.done/t.tot : 0;
+    curFire = p;
     var initial = (prevDone === null);
     document.getElementById('feu').style.setProperty('--fire', p.toFixed(3));
     document.getElementById('nFait').textContent = t.done;
@@ -1264,6 +1363,9 @@
         setInterval(showBob, 16000);
       }
     }catch(e){}
+
+    // Le raton laveur guette la guimauve
+    startRaccoonWatch();
 
     // PWA: enregistrement du service worker pour le mode hors-ligne
     if('serviceWorker' in navigator){

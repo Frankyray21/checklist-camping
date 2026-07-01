@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.3.0 — 2026-07-01
+
+### Ajouté
+- **Le raton laveur voleur de guimauve** 🦝 : quand le feu est assez fort pour qu'une guimauve grille (≥ 45 %), un raton se faufile de temps en temps, **pique la guimauve sur le bâton** et détale avec son butin. Petit Bob commente le larcin avec une réplique dédiée (« le raton a gardé la guimauve », etc.). La guimauve repousse après son passage. Désactivé si l'utilisateur réduit les animations.
+
 ## v1.2.0 — 2026-07-01
 
 ### Ajouté
