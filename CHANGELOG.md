@@ -3,6 +3,15 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.8.0 — 2026-07-01
+
+### Ajouté
+- **🔁 Changer de camp (coller un code)** : le bouton pour rejoindre un camp est maintenant toujours visible, même si l'appareil est déjà dans un camp. Avant, une fois entré dans un camp (même le mauvais), il n'y avait plus aucun moyen visible d'en rejoindre un autre.
+
+### Corrigé
+- **Impossible de changer de camp** : c'était la vraie cause du bogue « pas même code » entre les deux appareils. `Rejoindre un camp` détecte maintenant si tu es déjà dans un autre camp et demande confirmation avant de le quitter et de basculer vers le nouveau (arrête proprement la synchro de l'ancien camp, réinitialise les indicateurs 🟢/🔴).
+- **Pied de page pas à jour au chargement** : au démarrage de l'app, les boutons du camp (et le code affiché) s'affichaient encore comme si aucun camp n'était actif pendant un instant, même quand un camp était déjà enregistré sur l'appareil (ex. « Camp partagé (live) » au lieu de « Camp actif », « Rejoindre un camp » au lieu de « Changer de camp »). C'était trompeur en pleine confusion de synchro. Le pied de page se met maintenant à jour dès que le camp actif est retrouvé.
+
 ## v2.7.0 — 2026-07-01
 
 ### Ajouté

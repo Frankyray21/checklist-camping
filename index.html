@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.7.0';
+  var VERSION = 'v2.8.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1696,8 +1696,14 @@
   }
   function joinCampById(id){
     if(!id) return false;
-    if(!window.confirm('Rejoindre le camp partagé ? Ta liste va se synchroniser en direct avec l’autre appareil.')) return false;
+    if(id === campId){ showBadge('📡 Tu es déjà dans ce camp-là.'); return false; }
+    var msg = campId
+      ? 'Tu es déjà dans un autre camp. Le quitter et rejoindre celui-ci à la place ?'
+      : 'Rejoindre le camp partagé ? Ta liste va se synchroniser en direct avec l’autre appareil.';
+    if(!window.confirm(msg)) return false;
+    if(syncTimer){ clearInterval(syncTimer); syncTimer = null; }  // arrête la synchro avec l'ancien camp (s'il y en avait un)
     setCampId(id); campTs = 0; campStatusOk = null;
+    pushFailNotified = false; pullFailNotified = false;
     startSync(); buildFooter();
     showBadge('🏕️ Camp rejoint ! Vérification de la connexion…');
     return true;
@@ -1722,7 +1728,7 @@
   function resumeCamp(){
     var saved = null;
     try{ saved = window.localStorage.getItem(CAMPKEY); }catch(e){}
-    if(saved){ campId = saved; campTs = 0; startSync(); }
+    if(saved){ campId = saved; campTs = 0; startSync(); buildFooter(); }
   }
 
   // Répliques spéciales quand le raton frappe
@@ -2212,12 +2218,10 @@
     });
     pied.appendChild(camp);
 
-    if(!campId){
-      var rejoindre = el('button','install', '📋 Rejoindre un camp (coller)');
-      rejoindre.type='button';
-      rejoindre.addEventListener('click', pasteCampCode);
-      pied.appendChild(rejoindre);
-    }
+    var rejoindre = el('button','install', campId ? '🔁 Changer de camp (coller un code)' : '📋 Rejoindre un camp (coller)');
+    rejoindre.type='button';
+    rejoindre.addEventListener('click', pasteCampCode);
+    pied.appendChild(rejoindre);
 
     if(campId){
       var campStatusEl = el('p','campstatus');
