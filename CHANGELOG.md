@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.6.0 — 2026-07-01
+
+### Ajouté
+- **Compteur de vols de guimauves** 🦝 : Petit Bob tient le compte à vie de chaque guimauve piquée par le raton (« Le raton t'a piqué N guimauves jusqu'à date »). Sauvegardé sur l'appareil et **non remis à zéro** par « Tout décocher ». S'affiche seulement une fois qu'il y a eu au moins un vol.
+
 ## v1.5.0 — 2026-07-01
 
 ### Ajouté

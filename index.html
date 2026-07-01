@@ -245,6 +245,9 @@
   .zoobtn:active{transform:scale(.96);}
   .zoobtn:focus-visible{outline:3px solid var(--ciel); outline-offset:2px;}
   .zoobtn:disabled{opacity:.45; cursor:default; border-color:rgba(239,230,211,.14);}
+  .vols{margin:11px 0 0; font-size:13px; color:var(--cendre); font-weight:600; letter-spacing:.2px;}
+  .vols b{color:var(--flamme); font-weight:800; font-variant-numeric:tabular-nums;}
+  .vols.hide{display:none;}
 
   /* Bibittes qui trottinent + poussière + bouffées de puanteur */
   .gui.show{opacity:1 !important;}
@@ -507,6 +510,7 @@
         <button class="zoobtn" id="callRaton" type="button">🦝 Appeler le raton</button>
         <button class="zoobtn" id="callMouf" type="button">🦨 Appeler la moufette</button>
       </div>
+      <p class="vols hide" id="vols"></p>
 
       <button class="bob" id="bob" type="button" title="Tape pour une autre niaiserie de Petit Bob">
         <span class="bobpip" aria-hidden="true"></span>
@@ -771,9 +775,9 @@
     ]}
   ];
 
-  var VERSION = 'v1.5.0';
+  var VERSION = 'v1.6.0';
   var KEY = 'camping:tente:v2';
-  var state = { checked:{}, custom:{}, open:{}, removed:{} };
+  var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0 };
 
   // Persistance: localStorage si dispo, sinon repli en mémoire (navigation privée, etc.)
   var memStore = {};
@@ -797,6 +801,7 @@
         if(saved.checked) state.checked = saved.checked;
         if(saved.custom) state.custom = saved.custom;
         if(saved.removed) state.removed = saved.removed;
+        if(typeof saved.vols === 'number') state.vols = saved.vols;
         if(saved.open) state.open = Object.assign(state.open, saved.open);
       }
     }catch(e){ /* première ouverture ou stockage indispo: on garde le défaut */ }
@@ -878,6 +883,16 @@
     setTimeout(function(){ m.textContent = txt; m.style.opacity = '1'; }, 180);
   }
   function showBob(){ bobSay(bobMot()); }
+
+  // Le tableau de chasse du raton (persistant, tenu par Petit Bob)
+  function updateVols(){
+    var v = document.getElementById('vols');
+    if(!v) return;
+    var n = state.vols || 0;
+    if(n <= 0){ v.classList.add('hide'); v.textContent = ''; return; }
+    v.classList.remove('hide');
+    v.innerHTML = '🦝 Le raton t’a piqué <b>' + n + '</b> guimauve' + (n > 1 ? 's' : '') + ' jusqu’à date.';
+  }
 
   // Répliques spéciales quand le raton frappe
   var RATON_BOB = [
@@ -1429,6 +1444,8 @@
     var grab = setTimeout(function(){
       gui.classList.add('vole');       // la guimauve disparaît du bâton
       r.classList.add('plein');        // le raton la tient
+      state.vols = (state.vols || 0) + 1;  // Petit Bob tient le compte
+      save(); updateVols();
       bobSay(ratonBob());              // Petit Bob commente le vol
       spawnBurst(4);                   // quelques miettes d'étincelles
       puffDust(2, 60);                 // poussière quand il repart
@@ -1563,6 +1580,9 @@
     if(v) v.textContent = VERSION;
     await load();
     render();
+
+    // Compteur de vols de guimauves
+    updateVols();
 
     // Petit Bob: première niaiserie + bouton pour en pogner une autre
     var bm = document.getElementById('bobmot');
