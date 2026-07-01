@@ -3,6 +3,25 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.5.0 — 2026-07-01
+
+### Amélioré (passe d'animation)
+- **🔥 Flammes plus organiques** : vacillement multi-étapes désynchronisé (le feu danse au lieu d'osciller), appliqué aussi au mini-feu de l'en-tête.
+- **✨ Étincelles qui louvoient** : elles montent en zigzag au lieu d'une ligne droite.
+- **✅ Coche satisfaisante** : petit *pop* rebondi + anneau de pulsation quand on coche un item (déclenché seulement par l'action de l'utilisateur).
+- **📂 Ouverture des sections adoucie** : le contenu glisse et fond à l'ouverture d'un accordéon.
+- **🌙 Lune qui respire**, **braise de Petit Bob qui vacille**, **reflet qui coule** dans la barre de progression.
+- **🚜 Machinerie bonifiée** : les **roues tournent pour vrai** (rayons animés), 2 nouvelles machines (**moissonneuse-batteuse** et **niveleuse**, 6 au total), klaxon « TUUT TUUT ! » à mi-traversée, et passages plus fréquents.
+- Toutes les animations continues restent désactivées avec `prefers-reduced-motion`.
+
+### Corrigé (audit de performance ultracode)
+- Les 3 animations en boucle qui repeignaient l'écran à chaque frame (reflet de barre, lune, braise) sont converties en `transform`/`opacity` composités — meilleur pour la batterie et la fluidité; le survol de la lune refonctionne du même coup.
+- Les animations invisibles (48 étoiles éteintes, aurore absente, étincelles à feu mort) sont **mises en pause** tant qu'elles ne servent pas.
+- Les coches rapprochées ne coupent plus les animations en plein vol (timers correctement annulés sur la coche, le mini-feu et le pouf).
+- La poutine tombe via `transform` (plus de calcul de mise en page à chaque frame) et respecte le mode animations réduites.
+- La pluie de braises de la fête s'essouffle après ~12 s (le feu continue de rugir).
+- Aurore allégée (flou 13px → 9px), halo du mini-feu déplacé sur la bûche statique, règle CSS morte supprimée.
+
 ## v2.4.1 — 2026-07-01
 
 ### Corrigé (passe de révision)
