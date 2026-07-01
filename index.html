@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.6.1';
+  var VERSION = 'v2.7.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1658,7 +1658,8 @@
     try{ window.localStorage.setItem(CAMPKEY, id); }catch(e){}
   }
   function quitCamp(){
-    campId = null; campTs = 0;
+    campId = null; campTs = 0; campStatusOk = null;
+    pushFailNotified = false; pullFailNotified = false;
     if(syncTimer){ clearInterval(syncTimer); syncTimer = null; }
     try{ window.localStorage.removeItem(CAMPKEY); }catch(e){}
     buildFooter();
@@ -1687,22 +1688,36 @@
         if(!data) return;
         var id = data.name || '';
         if(!id){ showBadge('⚠️ Réponse inattendue du service. On reste local.'); return; }
-        setCampId(id); campTs = payload.ts;
+        setCampId(id); campTs = payload.ts; campStatusOk = null;
         startSync(); buildFooter(); shareCampLink();
         showBadge('📡 Camp créé ! Envoie le lien à ta conjointe.');
       })
       .catch(function(){ showBadge('⚠️ Réseau/CORS bloqué à la création du camp.'); });
+  }
+  function joinCampById(id){
+    if(!id) return false;
+    if(!window.confirm('Rejoindre le camp partagé ? Ta liste va se synchroniser en direct avec l’autre appareil.')) return false;
+    setCampId(id); campTs = 0; campStatusOk = null;
+    startSync(); buildFooter();
+    showBadge('🏕️ Camp rejoint ! Vérification de la connexion…');
+    return true;
   }
   function joinCampFromHash(){
     var m = (location.hash || '').match(/[#&]camp=([^&]+)/);
     if(!m) return false;
     var id = m[1];
     try{ history.replaceState(null, '', location.pathname); }catch(e){}
-    if(!window.confirm('Rejoindre le camp partagé ? Ta liste va se synchroniser en direct avec l’autre appareil.')) return false;
-    setCampId(id); campTs = 0;
-    startSync(); buildFooter();
-    showBadge('🏕️ Camp partagé rejoint !');
-    return true;
+    return joinCampById(id);
+  }
+  // Coller le lien/code du camp à la main: marche même sans navigation fraîche (fiable dans tous les cas)
+  function pasteCampCode(){
+    var raw = window.prompt('Colle ici le lien (ou juste le code) du camp à rejoindre :', '');
+    if(raw === null) return;
+    raw = raw.trim();
+    if(!raw) return;
+    var m = raw.match(/[#&]camp=([^&\s]+)/);
+    var id = m ? m[1] : raw;
+    joinCampById(id);
   }
   function resumeCamp(){
     var saved = null;
@@ -2197,6 +2212,13 @@
     });
     pied.appendChild(camp);
 
+    if(!campId){
+      var rejoindre = el('button','install', '📋 Rejoindre un camp (coller)');
+      rejoindre.type='button';
+      rejoindre.addEventListener('click', pasteCampCode);
+      pied.appendChild(rejoindre);
+    }
+
     if(campId){
       var campStatusEl = el('p','campstatus');
       campStatusEl.id = 'campStatus';
@@ -2206,6 +2228,11 @@
         campStatusEl.style.color = campStatusOk ? 'var(--ciel)' : 'var(--braise)';
       }
       pied.appendChild(campStatusEl);
+
+      var codeEl = el('p','campcode');
+      codeEl.style.cssText = 'font-size:11px; margin:2px 0 0; color:var(--cendre); font-family:monospace; letter-spacing:.5px;';
+      codeEl.textContent = 'Code du camp (compare-le sur les 2 appareils) : ' + campId;
+      pied.appendChild(codeEl);
     }
 
     var inst = makeInstallControl();

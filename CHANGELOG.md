@@ -3,6 +3,12 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.7.0 — 2026-07-01
+
+### Ajouté
+- **📋 Rejoindre un camp (coller)** : nouveau bouton pour rejoindre un camp partagé en collant le lien d'invitation directement dans l'app déjà ouverte — même cause que le problème réglé pour « Coller une liste » : coller un lien `#camp=...` dans un onglet déjà ouvert ne recharge pas toujours la page, donc l'invitation ne s'appliquait jamais silencieusement.
+- **Code du camp affiché** : le code exact du camp actif est maintenant visible sous le bouton du camp, pour comparer facilement entre les deux appareils et confirmer qu'ils sont bien dans le **même** camp.
+
 ## v2.6.1 — 2026-07-01
 
 ### Corrigé
