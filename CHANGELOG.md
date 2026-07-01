@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.3.0 — 2026-07-01
+
+### Ajouté
+- **📡 Camp partagé (synchro live entre 2 appareils)** : bouton « Camp partagé (live) » qui crée un camp et génère un lien d'invitation. Ta conjointe ouvre le lien → vos deux appareils **se synchronisent en direct** (cases cochées, items ajoutés/retirés/renommés), sans compte ni réglage. Utilise un petit stockage JSON gratuit (jsonblob), en réseau seulement (jamais mis en cache par le service worker). On peut quitter le camp en tout temps. *(Bêta : à tester sur de vrais appareils.)*
+
 ## v2.2.0 — 2026-07-01
 
 ### Ajouté
