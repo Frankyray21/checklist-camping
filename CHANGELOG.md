@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v1.4.1 — 2026-07-01
+
+### Modifié
+- Petit Bob changeait **trop vite** : il ne change plus à chaque item coché, et la rotation automatique passe de 16 s à 30 s. On peut toujours **taper sur Petit Bob** pour une nouvelle réplique à la demande, et il réagit encore aux événements (raton, moufette).
+
 ## v1.4.0 — 2026-07-01
 
 ### Ajouté
