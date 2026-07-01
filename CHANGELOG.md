@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.5.2 — 2026-07-01
+
+### Corrigé
+- **Partage par lien pendant un camp actif** : ouvrir un lien « liste partagée » (#l=) sur un appareil ayant déjà un camp partagé en cours ne se fait plus écraser par la synchro du camp. La liste appliquée est maintenant **diffusée immédiatement** au camp (au lieu d'attendre l'envoi différé habituel), pour gagner la course contre la première mise à jour reçue du camp.
+
 ## v2.5.1 — 2026-07-01
 
 ### Modifié

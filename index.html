@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.5.1';
+  var VERSION = 'v2.5.2';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1532,7 +1532,14 @@
     if(data.edits) state.edits = data.edits;
     if(data.notes) state.notes = data.notes;
     save(); render();
-    showBadge('🏕️ Liste partagée chargée !');
+    if(campId){
+      clearTimeout(pushT);  // évite un 2e envoi identique programmé par save() juste avant
+      pushCamp();  // camp déjà actif: on rediffuse tout de suite (pas d'attente du debounce),
+                   // pour gagner la course contre le pull initial qui pourrait sinon écraser ce chargement
+      showBadge('🏕️ Liste partagée chargée et envoyée au camp !');
+    } else {
+      showBadge('🏕️ Liste partagée chargée !');
+    }
   }
 
   // --- Camp partagé: synchro live entre 2 appareils (Firebase Realtime Database, sans compte) ---
@@ -2453,8 +2460,8 @@
     if(v) v.textContent = VERSION;
     await load();
     render();
-    applySharedIfAny();                  // lien de liste partagée (snapshot)
-    if(!joinCampFromHash()) resumeCamp(); // camp partagé live (lien #camp= ou repris)
+    if(!joinCampFromHash()) resumeCamp(); // camp partagé live (lien #camp= ou repris) — AVANT le lien de liste,
+    applySharedIfAny();                   // pour que campId soit prêt et que la diffusion immédiate fonctionne
 
     // Compteur de vols de guimauves
     updateVols();
