@@ -980,9 +980,9 @@
     ]}
   ];
 
-  var VERSION = 'v2.10.0';
+  var VERSION = 'v2.11.0';
   var KEY = 'camping:tente:v2';
-  var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
+  var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{}, mods:{} };
 
   // Persistance: localStorage si dispo, sinon repli en mémoire (navigation privée, etc.)
   var memStore = {};
@@ -1010,6 +1010,7 @@
         if(typeof saved.voeux === 'number') state.voeux = saved.voeux;
         if(saved.edits) state.edits = saved.edits;
         if(saved.notes) state.notes = saved.notes;
+        if(saved.mods) state.mods = saved.mods;
         if(saved.open) state.open = Object.assign(state.open, saved.open);
       }
     }catch(e){ /* première ouverture ou stockage indispo: on garde le défaut */ }
@@ -1031,11 +1032,14 @@
   // nom affiché (avec surcharge éditable)
   function itemName(it){ return (state.edits && state.edits[it.id]) || it.nm; }
 
+  // horodatage par item: permet à la synchro de fusionner sans écraser l'autre appareil
+  function touch(id){ if(!state.mods) state.mods = {}; state.mods[id] = Date.now(); }
+
   function visibleDefaults(cat){
     return cat.items.filter(function(it){ return !state.removed[it.id]; });
   }
   function allItems(cat){
-    var extra = (state.custom[cat.id] || []);
+    var extra = (state.custom[cat.id] || []).filter(function(it){ return !state.removed[it.id]; });
     return visibleDefaults(cat).concat(extra);
   }
   function removedCount(){
@@ -1521,11 +1525,23 @@
     if(!data) return false;
     var ok = window.confirm('Charger la liste de camping partagée ? Ça remplace ta liste actuelle sur cet appareil.');
     if(!ok) return false;
+    // horodate tout ce qui change (avant ET après), pour que la fusion du camp adopte cette liste
+    var stamp = {};
+    [state.checked, state.removed, state.edits, state.notes,
+     data.checked||{}, data.removed||{}, data.edits||{}, data.notes||{}].forEach(function(m){
+      Object.keys(m).forEach(function(k){ stamp[k] = 1; });
+    });
+    [state.custom, data.custom||{}].forEach(function(c){
+      for(var cid in c){ (c[cid]||[]).forEach(function(x){ stamp[x.id] = 1; }); }
+    });
     if(data.checked) state.checked = data.checked;
     if(data.custom) state.custom = data.custom;
     if(data.removed) state.removed = data.removed;
     if(data.edits) state.edits = data.edits;
     if(data.notes) state.notes = data.notes;
+    var now = Date.now();
+    if(!state.mods) state.mods = {};
+    Object.keys(stamp).forEach(function(k){ state.mods[k] = now; });
     save(); render();
     if(campId){
       clearTimeout(pushT);  // évite un 2e envoi identique programmé par save() juste avant
@@ -1604,7 +1620,7 @@
   }
 
   function campPayload(){
-    return { list:{ checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits, notes:state.notes }, ts: Date.now(), nom: campLabel };
+    return { list:{ checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits, notes:state.notes }, mods: state.mods || {}, ts: Date.now(), nom: campLabel };
   }
   function persistLocalRaw(){
     try{ var raw = JSON.stringify(state); if(hasStore) window.localStorage.setItem(KEY, raw); else memStore[KEY] = raw; }catch(e){}
@@ -1620,6 +1636,60 @@
     persistLocalRaw();
     render();
     applyingRemote = false;
+  }
+  // Fusion item par item avec l'autre appareil: pour chaque item, la modification
+  // la plus récente gagne. Personne n'écrase plus la liste au complet de l'autre.
+  function setMergedField(map, id, val){
+    if(val === undefined || val === null || val === false || val === ''){ delete map[id]; }
+    else map[id] = val;
+  }
+  function mergeRemoteCamp(data){
+    var rl = data.list || {};
+    var rm = data.mods || {};
+    if(!state.mods) state.mods = {};
+    var lm = state.mods;
+    var changed = false, localNewer = false;
+    var ids = {};
+    Object.keys(rm).forEach(function(k){ ids[k] = 1; });
+    Object.keys(lm).forEach(function(k){ ids[k] = 1; });
+    function remoteCustomDef(id){
+      var rc = rl.custom || {};
+      for(var cid in rc){
+        var arr = rc[cid] || [];
+        for(var i=0;i<arr.length;i++){ if(arr[i].id === id) return { catId: cid, it: arr[i] }; }
+      }
+      return null;
+    }
+    function localCustomDef(id){
+      for(var cid in state.custom){
+        var arr = state.custom[cid] || [];
+        for(var i=0;i<arr.length;i++){ if(arr[i].id === id) return arr[i]; }
+      }
+      return null;
+    }
+    Object.keys(ids).forEach(function(id){
+      var rts = rm[id] || 0, lts = lm[id] || 0;
+      if(rts > lts){
+        setMergedField(state.checked, id, (rl.checked || {})[id]);
+        setMergedField(state.removed, id, (rl.removed || {})[id]);
+        setMergedField(state.edits,   id, (rl.edits   || {})[id]);
+        setMergedField(state.notes,   id, (rl.notes   || {})[id]);
+        var rdef = remoteCustomDef(id);
+        if(rdef){
+          var ldef = localCustomDef(id);
+          if(ldef){ ldef.nm = rdef.it.nm; }
+          else {
+            if(!state.custom[rdef.catId]) state.custom[rdef.catId] = [];
+            state.custom[rdef.catId].push({ id: id, nm: rdef.it.nm });
+          }
+        }
+        lm[id] = rts;
+        changed = true;
+      } else if(lts > rts){
+        localNewer = true;
+      }
+    });
+    return { changed: changed, localNewer: localNewer };
   }
   function schedulePush(){
     if(!campId || applyingRemote) return;
@@ -1663,11 +1733,21 @@
           }catch(e){}
           updateCampLabelDisplay();
         }
-        if(!data || !data.ts || data.ts <= campTs) return;
+        if(!data) return;
         // si t'es en train d'écrire, on n'écrase pas ton champ: on réessaie au prochain tour
         var ae = document.activeElement;
         if(ae && ae.tagName === 'INPUT' && ae.type === 'text') return;
-        campTs = data.ts; applyRemoteList(data.list);
+        if(data.mods){
+          // nouveau format: fusion item par item, la modif la plus récente gagne pour CHAQUE item
+          var r = mergeRemoteCamp(data);
+          if(data.ts && data.ts > campTs) campTs = data.ts;
+          if(r.changed){ applyingRemote = true; persistLocalRaw(); render(); applyingRemote = false; }
+          if(r.localNewer) schedulePush();   // on a des bouts plus récents: on les renvoie au camp
+        } else {
+          // ancien format (l'autre appareil n'est pas encore à jour): comportement d'avant
+          if(!data.ts || data.ts <= campTs) return;
+          campTs = data.ts; applyRemoteList(data.list);
+        }
       })
       .catch(function(){
         if(!pullFailNotified){
@@ -1746,6 +1826,7 @@
       : 'Rejoindre le camp partagé ? Ta liste va se synchroniser en direct avec l’autre appareil.';
     if(!window.confirm(msg)) return false;
     if(syncTimer){ clearInterval(syncTimer); syncTimer = null; }  // arrête la synchro avec l'ancien camp (s'il y en avait un)
+    state.mods = {};   // rejoindre = adopter la liste du camp: on efface nos horodatages pour que le camp gagne la fusion
     setCampId(id); campTs = 0; campStatusOk = null;
     pushFailNotified = false; pullFailNotified = false;
     startSync(); buildFooter();
@@ -1861,6 +1942,7 @@
     inp.addEventListener('change', function(){
       state.checked[it.id] = inp.checked;
       if(!inp.checked) delete state.checked[it.id];
+      touch(it.id);
       save(); refresh(); showBob();   // Petit Bob change quand TU coches
       if(inp.checked && motionOK){    // petit pop satisfaisant sur la coche
         clearTimeout(box._popT);
@@ -1894,6 +1976,7 @@
       v = v.trim();
       if(!state.notes) state.notes = {};
       if(v) state.notes[it.id] = v; else delete state.notes[it.id];
+      touch(it.id);
       save(); render();
     });
     row.appendChild(cmt);
@@ -1913,6 +1996,7 @@
       } else {
         if(v === it.nm){ delete state.edits[it.id]; } else { state.edits[it.id] = v; }
       }
+      touch(it.id);
       save(); render();
     });
     row.appendChild(edit);
@@ -1922,15 +2006,10 @@
     del.setAttribute('aria-label','Enlever '+nm);
     del.addEventListener('click', function(ev){
       ev.preventDefault(); ev.stopPropagation();
-      if(isCustom){
-        // item personnalis\u00E9: on l'efface pour de bon (avec sa note, pour pas laisser de tra\u00EEneries)
-        state.custom[cat.id] = (state.custom[cat.id]||[]).filter(function(x){ return x.id !== it.id; });
-        if(state.notes) delete state.notes[it.id];
-      } else {
-        // item de base: on le retire (r\u00E9cup\u00E9rable avec \u00AB R\u00E9tablir \u00BB)
-        state.removed[it.id] = true;
-      }
+      // item de base ou personnalis\u00E9: tout passe par la corbeille (r\u00E9cup\u00E9rable)
+      state.removed[it.id] = true;
       delete state.checked[it.id];
+      touch(it.id);
       save(); render();
     });
     row.appendChild(del);
@@ -1942,6 +2021,17 @@
       var cat = DATA[i];
       for(var j=0;j<cat.items.length;j++){
         if(cat.items[j].id === id) return { cat:cat, it:cat.items[j] };
+      }
+    }
+    // items personnalisés (ajoutés à la main), maintenant récupérables eux aussi
+    for(var cid in state.custom){
+      var arr = state.custom[cid] || [];
+      for(var k=0;k<arr.length;k++){
+        if(arr[k].id === id){
+          var pcat = null;
+          for(var m=0;m<DATA.length;m++){ if(DATA[m].id === cid){ pcat = DATA[m]; break; } }
+          return { cat: pcat || { nom:'Perso' }, it: arr[k] };
+        }
       }
     }
     return null;
@@ -1973,6 +2063,7 @@
           restoreBtn.type='button';
           restoreBtn.addEventListener('click', function(){
             delete state.removed[id];
+            touch(id);
             save(); render();
             refresh();
             showBadge('↩️ Item restauré.');
@@ -1984,6 +2075,7 @@
         allBtn.type='button';
         allBtn.style.cssText = 'margin-top:12px;';
         allBtn.addEventListener('click', function(){
+          Object.keys(state.removed).forEach(touch);
           state.removed = {};
           save(); render();
           refresh();
@@ -2031,7 +2123,7 @@
 
       var body = el('div','catbody');
       visibleDefaults(cat).forEach(function(it){ body.appendChild(buildItem(cat, it, false)); });
-      (state.custom[cat.id]||[]).forEach(function(it){ body.appendChild(buildItem(cat, it, true)); });
+      (state.custom[cat.id]||[]).filter(function(it){ return !state.removed[it.id]; }).forEach(function(it){ body.appendChild(buildItem(cat, it, true)); });
 
       var ajout = el('div','ajout');
       var ai = el('input');
@@ -2043,7 +2135,9 @@
         var v = ai.value.trim();
         if(!v) return;
         if(!state.custom[cat.id]) state.custom[cat.id]=[];
-        state.custom[cat.id].push({ id:'x'+Date.now()+Math.floor(Math.random()*999), nm:v });
+        var newId = 'x'+Date.now()+Math.floor(Math.random()*999);
+        state.custom[cat.id].push({ id:newId, nm:v });
+        touch(newId);
         ai.value='';
         save(); render();
         // garde le focus pour enchaîner les ajouts
@@ -2298,7 +2392,7 @@
       var c = el('div','confirm','Sûr de tout recommencer\u00A0?');
       var oui = el('button','oui','Oui'); oui.type='button';
       var non = el('button','non','Non'); non.type='button';
-      oui.addEventListener('click', function(){ state.checked={}; save(); render(); });
+      oui.addEventListener('click', function(){ Object.keys(state.checked).forEach(touch); state.checked={}; save(); render(); });
       non.addEventListener('click', buildFooter);
       c.appendChild(oui); c.appendChild(non);
       pied.innerHTML=''; pied.appendChild(c);

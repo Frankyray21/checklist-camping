@@ -3,6 +3,15 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.11.0 — 2026-07-02
+
+### Corrigé
+- **La synchro n'écrase plus l'autre appareil** : c'était la vraie cause du « marche pas ». Avant, chaque envoi remplaçait la liste au complet (« le dernier qui parle gagne ») : si vous cochiez chacun de votre bord en dedans de quelques secondes, les changements d'un des deux disparaissaient en silence. Pire, une réception du camp pendant la petite attente avant l'envoi pouvait effacer une coche qu'on venait tout juste de faire. Maintenant, chaque item porte son propre horodatage et la synchro fusionne item par item : la modification la plus récente gagne pour CHAQUE item, jamais pour la liste au complet. Deux personnes peuvent cocher en même temps sans se piler dessus.
+
+### Modifié
+- **Les items personnalisés passent aussi par la corbeille** : supprimer un item ajouté à la main l'envoie dans la 🗑️ Corbeille (récupérable) au lieu de l'effacer pour de bon.
+- **Rejoindre un camp adopte sa liste** : quand tu rejoins un camp, c'est la liste du camp qui gagne (comme avant), puis la fusion prend le relais pour la suite.
+
 ## v2.10.0 — 2026-07-02
 
 ### Ajouté
