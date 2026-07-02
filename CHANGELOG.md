@@ -3,6 +3,14 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.12.0 — 2026-07-02
+
+### Corrigé
+- **Les deux listes se réconcilient enfin au complet** : la fusion de la v2.11.0 ne s'appliquait qu'aux items touchés APRÈS la mise à jour. Tout l'écart accumulé entre les deux appareils pendant l'ère « le dernier écrase tout » restait figé pour toujours : les listes demeuraient différentes même avec le même code de camp. Maintenant, dès la première synchro, les deux listes se réunissent au complet sans rien perdre (les coches, retraits, notes et items persos des DEUX bords sont conservés), puis la fusion item par item prend le relais pour la suite.
+
+### Ajouté
+- **Heure du dernier échange** : l'indicateur 🟢/🔴 affiche maintenant l'heure de la dernière synchro réussie (ex. « 🟢 Synchro avec le camp OK (14:32:05) »), pour voir en un coup d'œil si les échanges se font vraiment sur chaque appareil.
+
 ## v2.11.0 — 2026-07-02
 
 ### Corrigé

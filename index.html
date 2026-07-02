@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.11.0';
+  var VERSION = 'v2.12.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{}, mods:{} };
 
@@ -1014,6 +1014,15 @@
         if(saved.open) state.open = Object.assign(state.open, saved.open);
       }
     }catch(e){ /* première ouverture ou stockage indispo: on garde le défaut */ }
+    // migration: horodate le contenu d'avant la fusion (ts=1, plus vieux que toute vraie action),
+    // pour que l'écart historique entre les deux appareils se réconcilie au lieu de rester figé
+    if(!state.mods) state.mods = {};
+    ['checked','removed','edits','notes'].forEach(function(f){
+      Object.keys(state[f]||{}).forEach(function(id){ if(!state.mods[id]) state.mods[id] = 1; });
+    });
+    for(var cid in state.custom){
+      (state.custom[cid]||[]).forEach(function(x){ if(!state.mods[x.id]) state.mods[x.id] = 1; });
+    }
   }
 
   var saveT;
@@ -1611,11 +1620,21 @@
     updateCampLabelDisplay();
     pushCamp();
   }
+  var lastSyncAt = 0;
+  function syncHeure(){
+    try{ return new Date(lastSyncAt).toLocaleTimeString('fr-CA', { hour:'2-digit', minute:'2-digit', second:'2-digit' }); }
+    catch(e){ return ''; }
+  }
+  function campStatusText(){
+    var h = lastSyncAt ? ' (' + syncHeure() + ')' : '';
+    return campStatusOk ? '🟢 Synchro avec le camp OK' + h : '🔴 Problème de connexion au camp' + h;
+  }
   function noteCampStatus(ok){
     campStatusOk = ok;
+    lastSyncAt = Date.now();
     var el2 = document.getElementById('campStatus');
     if(!el2) return;
-    el2.textContent = ok ? '🟢 Synchro avec le camp OK' : '🔴 Problème de connexion au camp';
+    el2.textContent = campStatusText();
     el2.style.color = ok ? 'var(--ciel)' : 'var(--braise)';
   }
 
@@ -1624,18 +1643,6 @@
   }
   function persistLocalRaw(){
     try{ var raw = JSON.stringify(state); if(hasStore) window.localStorage.setItem(KEY, raw); else memStore[KEY] = raw; }catch(e){}
-  }
-  function applyRemoteList(list){
-    if(!list) return;
-    applyingRemote = true;
-    state.checked = list.checked || {};
-    state.custom  = list.custom  || {};
-    state.removed = list.removed || {};
-    state.edits   = list.edits   || {};
-    state.notes   = list.notes   || {};
-    persistLocalRaw();
-    render();
-    applyingRemote = false;
   }
   // Fusion item par item avec l'autre appareil: pour chaque item, la modification
   // la plus récente gagne. Personne n'écrase plus la liste au complet de l'autre.
@@ -1650,8 +1657,16 @@
     var lm = state.mods;
     var changed = false, localNewer = false;
     var ids = {};
-    Object.keys(rm).forEach(function(k){ ids[k] = 1; });
-    Object.keys(lm).forEach(function(k){ ids[k] = 1; });
+    function add(k){ ids[k] = 1; }
+    Object.keys(rm).forEach(add);
+    Object.keys(lm).forEach(add);
+    // aussi tout le contenu des deux bords, même sans horodatage (vieux formats)
+    ['checked','removed','edits','notes'].forEach(function(f){
+      Object.keys(rl[f] || {}).forEach(add);
+      Object.keys(state[f] || {}).forEach(add);
+    });
+    for(var rcid in (rl.custom || {})){ (rl.custom[rcid] || []).forEach(function(x){ add(x.id); }); }
+    for(var lcid in state.custom){ (state.custom[lcid] || []).forEach(function(x){ add(x.id); }); }
     function remoteCustomDef(id){
       var rc = rl.custom || {};
       for(var cid in rc){
@@ -1670,6 +1685,7 @@
     Object.keys(ids).forEach(function(id){
       var rts = rm[id] || 0, lts = lm[id] || 0;
       if(rts > lts){
+        // l'autre appareil a la modification la plus récente pour cet item: on l'adopte
         setMergedField(state.checked, id, (rl.checked || {})[id]);
         setMergedField(state.removed, id, (rl.removed || {})[id]);
         setMergedField(state.edits,   id, (rl.edits   || {})[id]);
@@ -1687,6 +1703,24 @@
         changed = true;
       } else if(lts > rts){
         localNewer = true;
+      } else {
+        // égalité (héritage d'avant la fusion): on réunit les deux bords sans rien perdre
+        if((rl.checked || {})[id] && !state.checked[id]){ state.checked[id] = true; changed = true; }
+        else if(state.checked[id] && !(rl.checked || {})[id]){ localNewer = true; }
+        if((rl.removed || {})[id] && !state.removed[id]){ state.removed[id] = true; changed = true; }
+        else if(state.removed[id] && !(rl.removed || {})[id]){ localNewer = true; }
+        var re = (rl.edits || {})[id];
+        if(re && !state.edits[id]){ state.edits[id] = re; changed = true; }
+        else if(state.edits[id] && state.edits[id] !== re){ localNewer = true; }
+        var rn = (rl.notes || {})[id];
+        if(rn && !state.notes[id]){ state.notes[id] = rn; changed = true; }
+        else if(state.notes[id] && state.notes[id] !== rn){ localNewer = true; }
+        var rdef2 = remoteCustomDef(id);
+        if(rdef2 && !localCustomDef(id)){
+          if(!state.custom[rdef2.catId]) state.custom[rdef2.catId] = [];
+          state.custom[rdef2.catId].push({ id: id, nm: rdef2.it.nm });
+          changed = true;
+        } else if(!rdef2 && localCustomDef(id)){ localNewer = true; }
       }
     });
     return { changed: changed, localNewer: localNewer };
@@ -1737,17 +1771,12 @@
         // si t'es en train d'écrire, on n'écrase pas ton champ: on réessaie au prochain tour
         var ae = document.activeElement;
         if(ae && ae.tagName === 'INPUT' && ae.type === 'text') return;
-        if(data.mods){
-          // nouveau format: fusion item par item, la modif la plus récente gagne pour CHAQUE item
-          var r = mergeRemoteCamp(data);
-          if(data.ts && data.ts > campTs) campTs = data.ts;
-          if(r.changed){ applyingRemote = true; persistLocalRaw(); render(); applyingRemote = false; }
-          if(r.localNewer) schedulePush();   // on a des bouts plus récents: on les renvoie au camp
-        } else {
-          // ancien format (l'autre appareil n'est pas encore à jour): comportement d'avant
-          if(!data.ts || data.ts <= campTs) return;
-          campTs = data.ts; applyRemoteList(data.list);
-        }
+        // fusion item par item: la modif la plus récente gagne pour CHAQUE item,
+        // et l'héritage sans horodatage se réunit sans rien perdre (jamais d'écrasement complet)
+        var r = mergeRemoteCamp(data);
+        if(data.ts && data.ts > campTs) campTs = data.ts;
+        if(r.changed){ applyingRemote = true; persistLocalRaw(); render(); applyingRemote = false; }
+        if(r.localNewer) schedulePush();   // on a des bouts que le camp n'a pas: on les renvoie
       })
       .catch(function(){
         if(!pullFailNotified){
@@ -2441,7 +2470,7 @@
       campStatusEl.id = 'campStatus';
       campStatusEl.style.cssText = 'font-size:12px; margin:2px 0 0; min-height:16px; font-weight:700;';
       if(campStatusOk !== null){
-        campStatusEl.textContent = campStatusOk ? '🟢 Synchro avec le camp OK' : '🔴 Problème de connexion au camp';
+        campStatusEl.textContent = campStatusText();
         campStatusEl.style.color = campStatusOk ? 'var(--ciel)' : 'var(--braise)';
       }
       pied.appendChild(campStatusEl);
