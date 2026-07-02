@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.9.1';
+  var VERSION = 'v2.10.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1937,6 +1937,72 @@
     return row;
   }
 
+  function findItemMeta(id){
+    for(var i=0;i<DATA.length;i++){
+      var cat = DATA[i];
+      for(var j=0;j<cat.items.length;j++){
+        if(cat.items[j].id === id) return { cat:cat, it:cat.items[j] };
+      }
+    }
+    return null;
+  }
+  function openTrash(){
+    var overlay = el('div','trash-overlay');
+    overlay.style.cssText = 'position:fixed; inset:0; z-index:900; background:rgba(19,36,27,.82); display:flex; align-items:center; justify-content:center; padding:20px;';
+    var panel = el('div','trash-panel');
+    panel.style.cssText = 'background:var(--toile); color:var(--nuit); border-radius:18px; max-width:480px; width:100%; max-height:80vh; overflow:auto; padding:20px 22px; box-shadow:0 20px 60px rgba(0,0,0,.6);';
+    overlay.appendChild(panel);
+    overlay.addEventListener('click', function(ev){ if(ev.target === overlay) document.body.removeChild(overlay); });
+
+    function refresh(){
+      panel.innerHTML = '';
+      var h = el('h3', null, '🗑️ Corbeille');
+      h.style.cssText = 'margin:0 0 14px; font-family:Anton, sans-serif; letter-spacing:.5px;';
+      panel.appendChild(h);
+
+      var removedIds = Object.keys(state.removed).filter(function(k){ return state.removed[k]; });
+      if(!removedIds.length){
+        panel.appendChild(el('p', null, 'La corbeille est vide.'));
+      } else {
+        removedIds.forEach(function(id){
+          var meta = findItemMeta(id);
+          var row = el('div','trash-row');
+          row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 0;';
+          row.appendChild(el('span', null, meta ? (itemName(meta.it) + ' <small style="opacity:.6"> · ' + meta.cat.nom + '</small>') : id));
+          var restoreBtn = el('button','install','↩️ Restaurer');
+          restoreBtn.type='button';
+          restoreBtn.addEventListener('click', function(){
+            delete state.removed[id];
+            save(); render();
+            refresh();
+            showBadge('↩️ Item restauré.');
+          });
+          row.appendChild(restoreBtn);
+          panel.appendChild(row);
+        });
+        var allBtn = el('button','install','↩️ Tout restaurer');
+        allBtn.type='button';
+        allBtn.style.cssText = 'margin-top:12px;';
+        allBtn.addEventListener('click', function(){
+          state.removed = {};
+          save(); render();
+          refresh();
+          showBadge('↩️ Tous les items ont été restaurés.');
+        });
+        panel.appendChild(allBtn);
+      }
+
+      var closeBtn = el('button','install','Fermer');
+      closeBtn.type='button';
+      closeBtn.style.cssText = 'margin-top:12px; margin-left:8px;';
+      closeBtn.addEventListener('click', function(){ document.body.removeChild(overlay); });
+      panel.appendChild(closeBtn);
+    }
+
+    refresh();
+    document.body.appendChild(overlay);
+  }
+
   function render(){
     var liste = document.getElementById('liste');
     liste.innerHTML = '';
@@ -2303,9 +2369,9 @@
     var nRem = removedCount();
     if(nRem > 0){
       var reb = el('button','reset',
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg> Rétablir '+nRem+' item'+(nRem>1?'s':'')+' retiré'+(nRem>1?'s':''));
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/></svg> 🗑️ Corbeille ('+nRem+')');
       reb.type='button';
-      reb.addEventListener('click', function(){ state.removed={}; save(); render(); });
+      reb.addEventListener('click', openTrash);
       pied.appendChild(reb);
     }
 

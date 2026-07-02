@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.10.0 — 2026-07-02
+
+### Ajouté
+- **🗑️ Corbeille** : le bouton « Rétablir » (tout ou rien) devient une vraie corbeille. Elle liste chaque item retiré individuellement (avec sa catégorie) et permet de le restaurer un par un, en plus du bouton « Tout restaurer » pour tout récupérer d'un coup.
+
 ## v2.9.1 — 2026-07-02
 
 ### Corrigé
