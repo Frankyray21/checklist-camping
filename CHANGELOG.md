@@ -3,6 +3,14 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.9.1 — 2026-07-02
+
+### Corrigé
+- **Même code de camp mais liste différente entre les deux appareils** : sur mobile, l'app en arrière-plan (écran verrouillé, changement d'appli) arrêtait complètement la synchro, et rien ne la relançait automatiquement au retour. Maintenant, dès que l'appli redevient visible, une resynchro complète se déclenche (réception des changements manqués + envoi de tout changement resté en attente).
+
+### Ajouté
+- **🔄 Resynchroniser maintenant** : nouveau bouton pour forcer une synchro immédiate avec le camp partagé, utile pour vérifier que tout est bien à jour.
+
 ## v2.9.0 — 2026-07-02
 
 ### Ajouté

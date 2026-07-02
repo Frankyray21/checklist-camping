@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.9.0';
+  var VERSION = 'v2.9.1';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1682,6 +1682,17 @@
     pullCamp();
     syncTimer = setInterval(pullCamp, 6000);
   }
+  // Sur mobile, l'appli en arrière-plan (écran verrouillé, changement d'appli) arrête la synchro:
+  // pullCamp() ignore les appels tant que l'onglet est caché, et les push en attente peuvent être
+  // gelés par le navigateur. On force un rattrapage complet dès qu'on revient sur l'appli.
+  function resyncNow(){
+    if(!campId) return;
+    pullCamp();
+    if(pushT){ clearTimeout(pushT); pushT = null; pushCamp(); }
+  }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) resyncNow(); });
+  window.addEventListener('focus', resyncNow);
+  window.addEventListener('pageshow', function(e){ if(e.persisted) resyncNow(); });
   function setCampId(id){
     campId = id;
     campLabel = '';
@@ -2261,6 +2272,11 @@
     pied.appendChild(rejoindre);
 
     if(campId){
+      var resync = el('button','install', '🔄 Resynchroniser maintenant');
+      resync.type='button';
+      resync.addEventListener('click', function(){ showBadge('🔄 Resynchro forcée…'); resyncNow(); });
+      pied.appendChild(resync);
+
       var campStatusEl = el('p','campstatus');
       campStatusEl.id = 'campStatus';
       campStatusEl.style.cssText = 'font-size:12px; margin:2px 0 0; min-height:16px; font-weight:700;';
