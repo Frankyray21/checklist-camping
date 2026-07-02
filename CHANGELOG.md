@@ -3,6 +3,11 @@
 Toutes les versions notables de la « Liste de camping en tente » sont consignées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). La version affichée est aussi visible dans le pied de page de l'app et dans la constante `VERSION` du fichier `index.html`.
 
+## v2.9.0 — 2026-07-02
+
+### Ajouté
+- **Nommer le camp** : touche sur le code du camp affiché dans le pied de page pour lui donner un petit nom (ex. « Famille Raymond ») au lieu de comparer un code illisible entre les deux appareils. Le nom se synchronise automatiquement avec l'autre appareil, comme le reste de la liste.
+
 ## v2.8.0 — 2026-07-01
 
 ### Ajouté

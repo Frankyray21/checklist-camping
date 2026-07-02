@@ -980,7 +980,7 @@
     ]}
   ];
 
-  var VERSION = 'v2.8.0';
+  var VERSION = 'v2.9.0';
   var KEY = 'camping:tente:v2';
   var state = { checked:{}, custom:{}, open:{}, removed:{}, vols:0, voeux:0, edits:{}, notes:{} };
 
@@ -1571,9 +1571,30 @@
   var FIREBASE_URL = 'https://camping-tente-default-rtdb.firebaseio.com';
   function CAMP_BIN(id){ return FIREBASE_URL + '/camps/' + id + '.json'; }
   var CAMPKEY = 'camping:camp';
+  var CAMPLABELKEY = 'camping:campLabel';
   var campId = null, campTs = 0, syncTimer = null, pushT = null, applyingRemote = false;
+  var campLabel = '';
   var pushFailNotified = false, pullFailNotified = false;
   var campStatusOk = null; // null=inconnu, true=dernière synchro réussie, false=en échec
+  function updateCampLabelDisplay(){
+    var el2 = document.getElementById('campCode');
+    if(!el2) return;
+    el2.textContent = campLabel
+      ? 'Camp : ' + campLabel + ' (code : ' + campId + ')'
+      : 'Code du camp (compare-le sur les 2 appareils, ou touche ici pour le nommer) : ' + campId;
+  }
+  function renameCamp(){
+    if(!campId) return;
+    var name = window.prompt('Donne un petit nom à ce camp (ex. Famille Raymond), pour le reconnaître facilement au lieu du code :', campLabel || '');
+    if(name === null) return;
+    campLabel = name.trim();
+    try{
+      if(campLabel) window.localStorage.setItem(CAMPLABELKEY, campLabel);
+      else window.localStorage.removeItem(CAMPLABELKEY);
+    }catch(e){}
+    updateCampLabelDisplay();
+    pushCamp();
+  }
   function noteCampStatus(ok){
     campStatusOk = ok;
     var el2 = document.getElementById('campStatus');
@@ -1583,7 +1604,7 @@
   }
 
   function campPayload(){
-    return { list:{ checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits, notes:state.notes }, ts: Date.now() };
+    return { list:{ checked:state.checked, custom:state.custom, removed:state.removed, edits:state.edits, notes:state.notes }, ts: Date.now(), nom: campLabel };
   }
   function persistLocalRaw(){
     try{ var raw = JSON.stringify(state); if(hasStore) window.localStorage.setItem(KEY, raw); else memStore[KEY] = raw; }catch(e){}
@@ -1634,6 +1655,14 @@
       .then(function(data){
         pullFailNotified = false;
         noteCampStatus(true);
+        if(data && typeof data.nom === 'string' && data.nom !== campLabel){
+          campLabel = data.nom;
+          try{
+            if(campLabel) window.localStorage.setItem(CAMPLABELKEY, campLabel);
+            else window.localStorage.removeItem(CAMPLABELKEY);
+          }catch(e){}
+          updateCampLabelDisplay();
+        }
         if(!data || !data.ts || data.ts <= campTs) return;
         // si t'es en train d'écrire, on n'écrase pas ton champ: on réessaie au prochain tour
         var ae = document.activeElement;
@@ -1655,13 +1684,17 @@
   }
   function setCampId(id){
     campId = id;
-    try{ window.localStorage.setItem(CAMPKEY, id); }catch(e){}
+    campLabel = '';
+    try{
+      window.localStorage.setItem(CAMPKEY, id);
+      window.localStorage.removeItem(CAMPLABELKEY);
+    }catch(e){}
   }
   function quitCamp(){
-    campId = null; campTs = 0; campStatusOk = null;
+    campId = null; campTs = 0; campStatusOk = null; campLabel = '';
     pushFailNotified = false; pullFailNotified = false;
     if(syncTimer){ clearInterval(syncTimer); syncTimer = null; }
-    try{ window.localStorage.removeItem(CAMPKEY); }catch(e){}
+    try{ window.localStorage.removeItem(CAMPKEY); window.localStorage.removeItem(CAMPLABELKEY); }catch(e){}
     buildFooter();
     showBadge('📡 Tu as quitté le camp partagé.');
   }
@@ -1728,7 +1761,11 @@
   function resumeCamp(){
     var saved = null;
     try{ saved = window.localStorage.getItem(CAMPKEY); }catch(e){}
-    if(saved){ campId = saved; campTs = 0; startSync(); buildFooter(); }
+    if(saved){
+      campId = saved; campTs = 0;
+      try{ campLabel = window.localStorage.getItem(CAMPLABELKEY) || ''; }catch(e){}
+      startSync(); buildFooter();
+    }
   }
 
   // Répliques spéciales quand le raton frappe
@@ -2234,8 +2271,13 @@
       pied.appendChild(campStatusEl);
 
       var codeEl = el('p','campcode');
-      codeEl.style.cssText = 'font-size:11px; margin:2px 0 0; color:var(--cendre); font-family:monospace; letter-spacing:.5px;';
-      codeEl.textContent = 'Code du camp (compare-le sur les 2 appareils) : ' + campId;
+      codeEl.id = 'campCode';
+      codeEl.style.cssText = 'font-size:11px; margin:2px 0 0; color:var(--cendre); font-family:monospace; letter-spacing:.5px; cursor:pointer; text-decoration:underline dotted;';
+      codeEl.title = 'Touche ici pour donner un petit nom à ce camp';
+      codeEl.textContent = campLabel
+        ? 'Camp : ' + campLabel + ' (code : ' + campId + ')'
+        : 'Code du camp (compare-le sur les 2 appareils, ou touche ici pour le nommer) : ' + campId;
+      codeEl.addEventListener('click', renameCamp);
       pied.appendChild(codeEl);
     }
 
